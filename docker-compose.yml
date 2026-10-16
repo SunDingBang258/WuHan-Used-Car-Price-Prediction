@@ -1,0 +1,52 @@
+# 本地开发与 staging 冒烟测试用的编排: MySQL + 应用
+# 用法: docker compose up -d --build   /   docker compose down -v
+#
+# 必须显式写 name: —— 否则 compose 用目录名推导项目名,
+# 而本仓库目录名是中文, slug 后为空, 会直接报 "project name must not be empty"。
+name: car-predict
+
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: car_predict
+      MYSQL_USER: carpredict
+      MYSQL_PASSWORD: carpredict
+    # 必须 utf8mb4, 否则中文以外的字符(emoji)存不进去
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    # 宿主端口用 13306, 避开本机已装的 MySQL 服务(它占着 3306)。
+    # 容器内仍是 3306, 应用通过 compose 网络用 DB_HOST=mysql 连接, 不受影响。
+    ports:
+      - "13306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  app:
+    build: .
+    environment:
+      APP_NAME: 武汉二手车价格预测
+      DEBUG: "false"
+      AUTO_CREATE_TABLES: "1"
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_USER: carpredict
+      DB_PASSWORD: carpredict
+      DB_NAME: car_predict
+      DB_CHARSET: utf8mb4
+    ports:
+      - "8000:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  mysql-data:

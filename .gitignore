@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+*.db
+
+# 缓存与覆盖率
+.*_cache/
+.coverage
+coverage.xml
+
+# PyCharm
+.idea/

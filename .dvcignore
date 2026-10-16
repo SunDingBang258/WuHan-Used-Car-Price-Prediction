@@ -1,3 +1,2 @@
-# Add patterns of files dvc should ignore, which could improve
-# the performance. Learn more at
-# https://dvc.org/doc/user-guide/dvcignore
+# 爬虫目录含上百 MB 的 Chrome profile, 与数据版本管理无关, 排除以加快 dvc status/add
+data/爬虫/
