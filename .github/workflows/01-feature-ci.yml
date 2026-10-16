@@ -1,0 +1,80 @@
+name: 01 · feature 快速校验
+
+# feature 只跑代码风格 + 少量数据层测试, 追求快速反馈。
+# 数据库由下面的 services.mysql 提供, 连接信息通过 env 注入 ——
+# 程序与测试都只读环境变量, 不需要任何为线下测试准备的替身代码。
+on:
+  push:
+    branches:
+      - "feature/**"
+  pull_request:
+    branches:
+      - dev
+  workflow_dispatch:
+
+concurrency:
+  group: feature-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: 代码风格 (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: 安装开发依赖
+        run: pip install -r requirements-dev.txt
+      - name: ruff check
+        run: ruff check app tests
+
+  unit-test:
+    name: 数据层测试
+    runs-on: ubuntu-latest
+
+    # 数据库在 workflow 里配置好; health-cmd 保证步骤开始时 MySQL 已可用
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: car_predict_test
+          MYSQL_USER: carpredict
+          MYSQL_PASSWORD: carpredict
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+
+    env:
+      AUTO_CREATE_TABLES: "0"
+      DB_HOST: 127.0.0.1
+      DB_PORT: "3306"
+      DB_USER: carpredict
+      DB_PASSWORD: carpredict
+      DB_NAME: car_predict_test
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: 安装开发依赖
+        run: pip install -r requirements-dev.txt
+
+      - name: 语法编译检查
+        run: python -m compileall -q app
+
+      - name: 跑测试
+        run: |
+          pytest -q \
+            tests/test_database_config.py \
+            tests/test_crud.py \
+            tests/test_health.py

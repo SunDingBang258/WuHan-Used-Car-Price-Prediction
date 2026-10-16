@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}编辑车源 #{{ car.id }}{% endblock %}
+{% block content %}
+
+<section class="card">
+  <h2>编辑车源 #{{ car.id }}</h2>
+  <form class="grid" method="post" action="/cars/{{ car.id }}/edit">
+    <label>品牌 *<input type="text" name="brand" required maxlength="50" value="{{ car.brand }}"></label>
+    <label>车系 *<input type="text" name="series" required maxlength="80" value="{{ car.series }}"></label>
+    <label class="wide">车型 *<input type="text" name="model_name" required maxlength="120" value="{{ car.model_name }}"></label>
+
+    <label>上牌时间<input type="date" name="reg_date" value="{{ car.reg_date if car.reg_date else '' }}"></label>
+    <label>表显里程(万公里) *<input type="number" name="mileage_wan" required min="0" max="100" step="0.01" value="{{ car.mileage_wan }}"></label>
+    <label>过户次数<input type="number" name="transfer_times" min="0" max="20" step="1" value="{{ car.transfer_times }}"></label>
+
+    <label>所在城市 *<input type="text" name="city" required maxlength="50" value="{{ car.city }}"></label>
+    <label>变速箱
+      <select name="gearbox">
+        <option value="">未填</option>
+        {% for g in ['自动', '手动', '手自一体', '双离合', '无级变速'] %}
+          <option value="{{ g }}" {% if car.gearbox == g %}selected{% endif %}>{{ g }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>能源类型
+      <select name="fuel_type">
+        <option value="">未填</option>
+        {% for f in ['汽油', '柴油', '纯电动', '插电混动', '油电混动', '增程'] %}
+          <option value="{{ f }}" {% if car.fuel_type == f %}selected{% endif %}>{{ f }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label>排量(L)<input type="number" name="displacement_l" min="0" max="10" step="0.1" value="{{ car.displacement_l if car.displacement_l is not none else '' }}"></label>
+    <label>新车指导价(万元)<input type="number" name="guide_price_wan" min="0" max="2000" step="0.01" value="{{ car.guide_price_wan if car.guide_price_wan is not none else '' }}"></label>
+    <label>提交人<input type="text" name="contact" maxlength="50" value="{{ car.contact or '' }}"></label>
+
+    <div class="actions wide">
+      <button type="submit" class="primary">保存修改</button>
+      <a class="button ghost" href="/">返回</a>
+    </div>
+  </form>
+</section>
+
+{% endblock %}
