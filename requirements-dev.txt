@@ -2,8 +2,10 @@
 -r requirements.txt
 
 pytest==9.1.1
-pytest-cov==7.1.0
 httpx==0.28.1
 
-# 训练脚本 data/train_model.py 用(服务本身不需要)
+# ML 训练/实验跟踪(ml/train.py + ml/data_pipeline.py; 服务本身不需要)
 pandas==3.0.6
+PyYAML==6.0.3
+mlflow==3.17.1
+dagshub==0.7.3

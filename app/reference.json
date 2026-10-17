@@ -1,5 +1,5 @@
 {
-  "_说明": "由 data/prepare_dataset.py 生成, 请勿手改",
+  "_说明": "由 ml/data_pipeline.py 生成, 请勿手改",
   "brands": {
     "AITO 问界": {
       "id": "609",
