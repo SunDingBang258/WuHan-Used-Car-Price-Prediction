@@ -1,9 +1,7 @@
 爬虫/
 /che168_wuhan_cars.csv
 数据处理/
-prepare_dataset.py
-train_model.py
 
 # 本地跑批时的临时日志与临时目录
-_*.log
+_*.log*
 _*/

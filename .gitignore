@@ -14,6 +14,8 @@ coverage.xml
 # PyCharm
 .idea/
 
-# 模型产物(由 data/train_model.py 重新训练即可生成)
-*.joblib
+# 模型产物: app/model.joblib 要提交(CI 构建镜像时要用), 所以不忽略 .joblib
 *.pkl
+
+# MLflow 本地记录(tracking 用 sqlite, 产物落在这里)
+mlruns/

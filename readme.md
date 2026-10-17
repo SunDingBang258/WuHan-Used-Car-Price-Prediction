@@ -101,8 +101,7 @@ uvicorn app.main:app --reload --port 8000
 ```bash
 export DB_NAME=car_predict_test      # PowerShell: $env:DB_NAME='car_predict_test'
 pytest                               # 全量
-
-pytest --cov=app --cov-report=term-missing
+pytest tests/stage_feature           # 只跑某一阶段
 ```
 
 测试按 CI 阶段分目录存放，跑某一阶段的测试就是跑对应目录。

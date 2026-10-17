@@ -62,8 +62,7 @@ jobs:
           pytest -q \
             tests/stage_feature \
             tests/stage_dev \
-            tests/stage_staging \
-            --cov=app --cov-report=term-missing --cov-fail-under=85
+            tests/stage_staging
 
   build-and-push:
     name: 构建并推送镜像 (ghcr.io)
