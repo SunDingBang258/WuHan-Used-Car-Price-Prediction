@@ -65,18 +65,13 @@ def client(clean_db):
 
 @pytest.fixture()
 def sample_payload():
-    """一份合法的车辆参数(字段与价格预测模型的特征对齐)。"""
+    """一份合法的车辆参数。品牌/车系必须是 app/reference.json 里存在的组合。"""
     return {
-        "brand": "腾势",
-        "series": "腾势D9",
-        "model_name": "腾势D9 2022款 DM-i 970 四驱旗舰型",
-        "reg_date": "2023-05-01",
-        "mileage_wan": 6.05,
-        "transfer_times": 0,
-        "city": "武汉",
-        "gearbox": "自动",
-        "fuel_type": "插电混动",
-        "displacement_l": 1.5,
-        "guide_price_wan": 48.39,
-        "contact": "张三",
+        "brand": "特斯拉",
+        "series": "Model Y",
+        "car_age_years": 1.5,
+        "mileage_wan": 2.5,
+        "zero_transfer": True,
+        "factory_warranty": True,
+        "near_new": False,
     }

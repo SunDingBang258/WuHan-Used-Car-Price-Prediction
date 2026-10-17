@@ -11,7 +11,6 @@ def list_cars(
     db: Session,
     *,
     brand: str | None = None,
-    city: str | None = None,
     skip: int = 0,
     limit: int = 50,
 ) -> tuple[list[models.Car], int]:
@@ -21,9 +20,6 @@ def list_cars(
     if brand:
         stmt = stmt.where(models.Car.brand == brand)
         count_stmt = count_stmt.where(models.Car.brand == brand)
-    if city:
-        stmt = stmt.where(models.Car.city == city)
-        count_stmt = count_stmt.where(models.Car.city == city)
 
     stmt = stmt.order_by(models.Car.id.desc()).offset(skip).limit(limit)
     items = list(db.execute(stmt).scalars())
@@ -35,19 +31,27 @@ def get_car(db: Session, car_id: int) -> models.Car | None:
     return db.get(models.Car, car_id)
 
 
-def create_car(db: Session, payload: schemas.CarCreate) -> models.Car:
-    car = models.Car(**payload.model_dump())
+def create_car(db: Session, payload: schemas.CarCreate, features: dict) -> models.Car:
+    """features 是 app.reference.lookup() 的结果(品牌ID/车系ID/三个统计特征)。"""
+    car = models.Car(**payload.model_dump(), **features)
     db.add(car)
     db.commit()
     db.refresh(car)
     return car
 
 
-def update_car(db: Session, car_id: int, payload: schemas.CarUpdate) -> models.Car | None:
+def update_car(
+    db: Session,
+    car_id: int,
+    payload: schemas.CarUpdate,
+    features: dict | None = None,
+) -> models.Car | None:
     car = db.get(models.Car, car_id)
     if car is None:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(car, key, value)
+    for key, value in (features or {}).items():
         setattr(car, key, value)
     db.commit()
     db.refresh(car)

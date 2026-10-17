@@ -51,7 +51,7 @@ jobs:
         run: curl -fsS http://127.0.0.1:8000/api/health/db
 
       - name: 冒烟测试
-        run: pytest -q tests/test_app_smoke.py
+        run: pytest -q tests/stage_staging
 
       - name: 失败时打印容器日志
         if: failure()

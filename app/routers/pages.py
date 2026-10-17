@@ -10,7 +10,7 @@ from fastapi.templating import Jinja2Templates
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
-from app import crud, schemas
+from app import crud, reference, schemas
 from app.database import get_db
 
 ROOT = Path(__file__).resolve().parent.parent.parent
@@ -20,8 +20,9 @@ router = APIRouter(tags=["pages"])
 
 DbSession = Annotated[Session, Depends(get_db)]
 
-# 表单里空字符串要还原成 None, 否则数字/日期字段会校验失败
-NUMERIC_WITH_DEFAULT = {"transfer_times": 0}
+# 三个标记字段在页面上是「是/否」下拉框, 统一成 "1"/"0" 再交给 Pydantic
+FLAG_FIELDS = ("zero_transfer", "factory_warranty", "near_new")
+TRUE_WORDS = ("1", "true", "on", "yes", "是")
 
 
 def _clean_form(form: dict) -> dict:
@@ -30,9 +31,9 @@ def _clean_form(form: dict) -> dict:
     for key, value in form.items():
         value = (value or "").strip()
         data[key] = value if value != "" else None
-    for key, default in NUMERIC_WITH_DEFAULT.items():
-        if data.get(key) is None:
-            data[key] = default
+    for key in FLAG_FIELDS:
+        raw = str(form.get(key, "0")).strip().lower()
+        data[key] = "1" if raw in TRUE_WORDS else "0"
     return data
 
 
@@ -52,12 +53,42 @@ def _missing_car(request: Request, car_id: int) -> HTMLResponse:
     )
 
 
-@router.get("/", response_class=HTMLResponse, summary="首页: 录入表单 + 列表")
-def index(request: Request, db: DbSession) -> HTMLResponse:
+def _render_index(request: Request, db: Session, *, error=None, form=None, status_code=200):
     items, total = crud.list_cars(db, limit=100)
     return templates.TemplateResponse(
-        request, "index.html", {"cars": items, "total": total, "error": None, "form": {}}
+        request,
+        "index.html",
+        {
+            "cars": items,
+            "total": total,
+            "error": error,
+            "form": form or {},
+            "brands": reference.brand_names(),
+            "series": reference.series_names(),
+            "series_by_brand": reference.series_by_brand(),
+        },
+        status_code=status_code,
     )
+
+
+def _render_edit(request: Request, car, *, error=None, status_code=200):
+    return templates.TemplateResponse(
+        request,
+        "edit.html",
+        {
+            "car": car,
+            "error": error,
+            "brands": reference.brand_names(),
+            "series": reference.series_names(),
+            "series_by_brand": reference.series_by_brand(),
+        },
+        status_code=status_code,
+    )
+
+
+@router.get("/", response_class=HTMLResponse, summary="首页: 录入表单 + 列表")
+def index(request: Request, db: DbSession) -> HTMLResponse:
+    return _render_index(request, db)
 
 
 @router.post("/cars", response_class=HTMLResponse, summary="表单提交: 新增")
@@ -65,15 +96,10 @@ async def create_from_form(request: Request, db: DbSession):
     form = dict(await request.form())
     try:
         payload = schemas.CarCreate(**_clean_form(form))
+        features = reference.lookup(payload.brand, payload.series)
     except (ValidationError, ValueError) as exc:
-        items, total = crud.list_cars(db, limit=100)
-        return templates.TemplateResponse(
-            request,
-            "index.html",
-            {"cars": items, "total": total, "error": _format_error(exc), "form": form},
-            status_code=400,
-        )
-    crud.create_car(db, payload)
+        return _render_index(request, db, error=_format_error(exc), form=form, status_code=400)
+    crud.create_car(db, payload, features)
     return RedirectResponse(url="/", status_code=303)
 
 
@@ -82,23 +108,26 @@ def edit_page(request: Request, car_id: int, db: DbSession):
     car = crud.get_car(db, car_id)
     if car is None:
         return _missing_car(request, car_id)
-    return templates.TemplateResponse(request, "edit.html", {"car": car, "error": None})
+    return _render_edit(request, car)
 
 
 @router.post("/cars/{car_id}/edit", response_class=HTMLResponse, summary="表单提交: 修改")
 async def update_from_form(request: Request, car_id: int, db: DbSession):
+    car = crud.get_car(db, car_id)
+    if car is None:
+        return _missing_car(request, car_id)
     form = dict(await request.form())
     try:
         payload = schemas.CarUpdate(**_clean_form(form))
+        touched = payload.model_dump(exclude_unset=True)
+        features = None
+        if "brand" in touched and "series" in touched:
+            features = reference.lookup(touched["brand"], touched["series"])
+        elif "brand" in touched or "series" in touched:
+            raise ValueError("品牌和车系必须一起改")
     except (ValidationError, ValueError) as exc:
-        car = crud.get_car(db, car_id)
-        if car is None:
-            return _missing_car(request, car_id)
-        return templates.TemplateResponse(
-            request, "edit.html", {"car": car, "error": _format_error(exc)}, status_code=400
-        )
-    if crud.update_car(db, car_id, payload) is None:
-        return _missing_car(request, car_id)
+        return _render_edit(request, car, error=_format_error(exc), status_code=400)
+    crud.update_car(db, car_id, payload, features)
     return RedirectResponse(url="/", status_code=303)
 
 
