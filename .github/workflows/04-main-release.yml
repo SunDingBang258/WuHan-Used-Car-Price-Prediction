@@ -61,13 +61,11 @@ jobs:
 
       - name: 全量测试
         run: |
+          # 全量: 三个阶段的测试目录位置都写明(main 没有单独的测试目录)
           pytest -q \
-            tests/test_database_config.py \
-            tests/test_crud.py \
-            tests/test_health.py \
-            tests/test_cars_api.py \
-            tests/test_cars_pages.py \
-            tests/test_mysql_integration.py \
+            tests/stage_feature \
+            tests/stage_dev \
+            tests/stage_staging \
             --cov=app --cov-report=term-missing --cov-fail-under=85
 
   build-and-push:

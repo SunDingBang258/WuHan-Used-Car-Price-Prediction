@@ -52,3 +52,16 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+
+
+if __name__ == "__main__":
+    # 方便在 IDE 里直接 Run / Debug, 等价于:
+    #   uvicorn app.main:app --host 127.0.0.1 --port 8000
+    import sys
+
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+
+    import uvicorn
+
+    uvicorn.run("app.main:app", host="127.0.0.1", port=8000)

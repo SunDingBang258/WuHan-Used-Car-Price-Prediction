@@ -13,3 +13,7 @@ coverage.xml
 
 # PyCharm
 .idea/
+
+# 模型产物(由 data/train_model.py 重新训练即可生成)
+*.joblib
+*.pkl

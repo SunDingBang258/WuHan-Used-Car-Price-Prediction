@@ -57,13 +57,7 @@ jobs:
       # 逐个列出测试文件, 让「这一关到底跑了什么」一目了然
       - name: 全量测试 + 覆盖率门槛
         run: |
-          pytest -q \
-            tests/test_database_config.py \
-            tests/test_crud.py \
-            tests/test_health.py \
-            tests/test_cars_api.py \
-            tests/test_cars_pages.py \
-            tests/test_mysql_integration.py \
+          pytest -q tests/stage_feature tests/stage_dev \
             --cov=app --cov-report=term-missing --cov-report=xml --cov-fail-under=85
 
       - name: 上传覆盖率报告

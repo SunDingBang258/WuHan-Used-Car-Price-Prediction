@@ -1,38 +1,35 @@
 {% extends "base.html" %}
 {% block content %}
 
+<datalist id="brand-options">{% for b in brands %}<option value="{{ b }}">{% endfor %}</datalist>
+<datalist id="series-options">{% for s in series %}<option value="{{ s }}">{% endfor %}</datalist>
+
 <section class="card">
   <h2>录入车辆参数</h2>
   <form class="grid" method="post" action="/cars" id="car-form">
-    <label>品牌 *<input type="text" name="brand" required maxlength="50" value="{{ form.brand or '' }}" placeholder="如 腾势"></label>
-    <label>车系 *<input type="text" name="series" required maxlength="80" value="{{ form.series or '' }}" placeholder="如 腾势D9"></label>
-    <label class="wide">车型 *<input type="text" name="model_name" required maxlength="120" value="{{ form.model_name or '' }}" placeholder="如 腾势D9 2022款 DM-i 970 四驱旗舰型"></label>
-
-    <label>上牌时间<input type="date" name="reg_date" value="{{ form.reg_date or '' }}"></label>
+    <label>品牌 *<input type="text" name="brand" id="brand-input" list="brand-options" required maxlength="50" value="{{ form.brand or '' }}" placeholder="输入可筛选, 如 宝马"></label>
+    <label>车系 *<input type="text" name="series" id="series-input" list="series-options" required maxlength="80" value="{{ form.series or '' }}" placeholder="输入可筛选, 如 宝马X5"></label>
+    <label>车龄(年) *<input type="number" name="car_age_years" required min="0" max="50" step="0.1" value="{{ form.car_age_years or '' }}" placeholder="3.5"></label>
     <label>表显里程(万公里) *<input type="number" name="mileage_wan" required min="0" max="100" step="0.01" value="{{ form.mileage_wan or '' }}" placeholder="6.05"></label>
-    <label>过户次数<input type="number" name="transfer_times" min="0" max="20" step="1" value="{{ form.transfer_times or 0 }}"></label>
 
-    <label>所在城市 *<input type="text" name="city" required maxlength="50" value="{{ form.city or '武汉' }}"></label>
-    <label>变速箱
-      <select name="gearbox">
-        <option value="">未填</option>
-        {% for g in ['自动', '手动', '手自一体', '双离合', '无级变速'] %}
-          <option value="{{ g }}" {% if form.gearbox == g %}selected{% endif %}>{{ g }}</option>
-        {% endfor %}
+    <label>0次过户
+      <select name="zero_transfer">
+        <option value="0"{% if form.zero_transfer != '1' %} selected{% endif %}>否</option>
+        <option value="1"{% if form.zero_transfer == '1' %} selected{% endif %}>是</option>
       </select>
     </label>
-    <label>能源类型
-      <select name="fuel_type">
-        <option value="">未填</option>
-        {% for f in ['汽油', '柴油', '纯电动', '插电混动', '油电混动', '增程'] %}
-          <option value="{{ f }}" {% if form.fuel_type == f %}selected{% endif %}>{{ f }}</option>
-        {% endfor %}
+    <label>原厂质保
+      <select name="factory_warranty">
+        <option value="0"{% if form.factory_warranty != '1' %} selected{% endif %}>否</option>
+        <option value="1"{% if form.factory_warranty == '1' %} selected{% endif %}>是</option>
       </select>
     </label>
-
-    <label>排量(L)<input type="number" name="displacement_l" min="0" max="10" step="0.1" value="{{ form.displacement_l or '' }}" placeholder="2.0"></label>
-    <label>新车指导价(万元)<input type="number" name="guide_price_wan" min="0" max="2000" step="0.01" value="{{ form.guide_price_wan or '' }}" placeholder="48.39"></label>
-    <label>提交人<input type="text" name="contact" maxlength="50" value="{{ form.contact or '' }}"></label>
+    <label>准新车
+      <select name="near_new">
+        <option value="0"{% if form.near_new != '1' %} selected{% endif %}>否</option>
+        <option value="1"{% if form.near_new == '1' %} selected{% endif %}>是</option>
+      </select>
+    </label>
 
     <div class="actions wide">
       <button type="submit" class="primary">保存参数</button>
@@ -48,8 +45,9 @@
     <table>
       <thead>
         <tr>
-          <th>ID</th><th>品牌</th><th>车系</th><th>车型</th><th>上牌时间</th>
-          <th>里程(万)</th><th>过户</th><th>城市</th><th>新车指导价(万)</th><th>提交人</th><th>操作</th>
+          <th>ID</th><th>品牌</th><th>车系</th><th>车龄(年)</th>
+          <th>里程(万)</th><th>0次过户</th><th>原厂质保</th><th>准新车</th>
+          <th>车系中位价(万)</th><th>操作</th>
         </tr>
       </thead>
       <tbody>
@@ -58,13 +56,12 @@
           <td>{{ car.id }}</td>
           <td>{{ car.brand }}</td>
           <td>{{ car.series }}</td>
-          <td class="ellipsis" title="{{ car.model_name }}">{{ car.model_name }}</td>
-          <td>{{ car.reg_date if car.reg_date else '—' }}</td>
+          <td>{{ car.car_age_years }}</td>
           <td>{{ '%.2f'|format(car.mileage_wan) }}</td>
-          <td>{{ car.transfer_times }}</td>
-          <td>{{ car.city }}</td>
-          <td>{{ '%.2f'|format(car.guide_price_wan) if car.guide_price_wan is not none else '—' }}</td>
-          <td>{{ car.contact or '—' }}</td>
+          <td>{{ '是' if car.zero_transfer else '否' }}</td>
+          <td>{{ '是' if car.factory_warranty else '否' }}</td>
+          <td>{{ '是' if car.near_new else '否' }}</td>
+          <td>{{ '%.2f'|format(car.series_price_median) if car.series_price_median is not none else '—' }}</td>
           <td class="ops">
             <a href="/cars/{{ car.id }}/edit">编辑</a>
             <form method="post" action="/cars/{{ car.id }}/delete" onsubmit="return confirm('确认删除这条记录?');">
@@ -80,5 +77,25 @@
     <p class="empty">还没有数据，用上面的表单添加第一条。</p>
   {% endif %}
 </section>
+
+<script>
+  // 选好品牌后, 把车系下拉收窄成该品牌的 (数据来自静态对照表, 不查数据库)
+  const SERIES_BY_BRAND = {{ series_by_brand|tojson }};
+  const brandInput = document.getElementById("brand-input");
+  const seriesInput = document.getElementById("series-input");
+  const seriesList = document.getElementById("series-options");
+
+  function refillSeries() {
+    const list = SERIES_BY_BRAND[brandInput.value.trim()];
+    if (!list) return;  // 品牌还没输到有效值: 保持全量可选
+    seriesList.innerHTML = list.map((s) => '<option value="' + s + '">').join("");
+    const current = seriesInput.value.trim();
+    if (current && !list.includes(current)) seriesInput.value = "";
+  }
+
+  brandInput.addEventListener("input", refillSeries);
+  brandInput.addEventListener("change", refillSeries);
+  refillSeries();
+</script>
 
 {% endblock %}

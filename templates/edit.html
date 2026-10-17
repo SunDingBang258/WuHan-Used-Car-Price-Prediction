@@ -1,39 +1,56 @@
 {% extends "base.html" %}
-{% block title %}编辑车源 #{{ car.id }}{% endblock %}
+{% block title %}编辑车源 #{{ car.id }}<script>
+  // 选好品牌后, 把车系下拉收窄成该品牌的 (数据来自静态对照表, 不查数据库)
+  const SERIES_BY_BRAND = {{ series_by_brand|tojson }};
+  const brandInput = document.getElementById("brand-input");
+  const seriesInput = document.getElementById("series-input");
+  const seriesList = document.getElementById("series-options");
+
+  function refillSeries() {
+    const list = SERIES_BY_BRAND[brandInput.value.trim()];
+    if (!list) return;
+    seriesList.innerHTML = list.map((s) => '<option value="' + s + '">').join("");
+    const current = seriesInput.value.trim();
+    if (current && !list.includes(current)) seriesInput.value = "";
+  }
+
+  brandInput.addEventListener("input", refillSeries);
+  brandInput.addEventListener("change", refillSeries);
+  refillSeries();
+</script>
+
+{% endblock %}
 {% block content %}
+
+<datalist id="brand-options">{% for b in brands %}<option value="{{ b }}">{% endfor %}</datalist>
+<datalist id="series-options">{% for s in series %}<option value="{{ s }}">{% endfor %}</datalist>
 
 <section class="card">
   <h2>编辑车源 #{{ car.id }}</h2>
   <form class="grid" method="post" action="/cars/{{ car.id }}/edit">
-    <label>品牌 *<input type="text" name="brand" required maxlength="50" value="{{ car.brand }}"></label>
-    <label>车系 *<input type="text" name="series" required maxlength="80" value="{{ car.series }}"></label>
-    <label class="wide">车型 *<input type="text" name="model_name" required maxlength="120" value="{{ car.model_name }}"></label>
-
-    <label>上牌时间<input type="date" name="reg_date" value="{{ car.reg_date if car.reg_date else '' }}"></label>
+    <label>品牌 *<input type="text" name="brand" id="brand-input" list="brand-options" required maxlength="50" value="{{ car.brand }}"></label>
+    <label>车系 *<input type="text" name="series" id="series-input" list="series-options" required maxlength="80" value="{{ car.series }}"></label>
+    <label>车龄(年) *<input type="number" name="car_age_years" required min="0" max="50" step="0.1" value="{{ car.car_age_years }}"></label>
     <label>表显里程(万公里) *<input type="number" name="mileage_wan" required min="0" max="100" step="0.01" value="{{ car.mileage_wan }}"></label>
-    <label>过户次数<input type="number" name="transfer_times" min="0" max="20" step="1" value="{{ car.transfer_times }}"></label>
 
-    <label>所在城市 *<input type="text" name="city" required maxlength="50" value="{{ car.city }}"></label>
-    <label>变速箱
-      <select name="gearbox">
-        <option value="">未填</option>
-        {% for g in ['自动', '手动', '手自一体', '双离合', '无级变速'] %}
-          <option value="{{ g }}" {% if car.gearbox == g %}selected{% endif %}>{{ g }}</option>
-        {% endfor %}
+    <label>0次过户
+      <select name="zero_transfer">
+        <option value="0"{% if not car.zero_transfer %} selected{% endif %}>否</option>
+        <option value="1"{% if car.zero_transfer %} selected{% endif %}>是</option>
       </select>
     </label>
-    <label>能源类型
-      <select name="fuel_type">
-        <option value="">未填</option>
-        {% for f in ['汽油', '柴油', '纯电动', '插电混动', '油电混动', '增程'] %}
-          <option value="{{ f }}" {% if car.fuel_type == f %}selected{% endif %}>{{ f }}</option>
-        {% endfor %}
+    <label>原厂质保
+      <select name="factory_warranty">
+        <option value="0"{% if not car.factory_warranty %} selected{% endif %}>否</option>
+        <option value="1"{% if car.factory_warranty %} selected{% endif %}>是</option>
       </select>
     </label>
-
-    <label>排量(L)<input type="number" name="displacement_l" min="0" max="10" step="0.1" value="{{ car.displacement_l if car.displacement_l is not none else '' }}"></label>
-    <label>新车指导价(万元)<input type="number" name="guide_price_wan" min="0" max="2000" step="0.01" value="{{ car.guide_price_wan if car.guide_price_wan is not none else '' }}"></label>
-    <label>提交人<input type="text" name="contact" maxlength="50" value="{{ car.contact or '' }}"></label>
+    <label>准新车
+      <select name="near_new">
+        <option value="0"{% if not car.near_new %} selected{% endif %}>否</option>
+        <option value="1"{% if car.near_new %} selected{% endif %}>是</option>
+      </select>
+    </label>
 
     <div class="actions wide">
       <button type="submit" class="primary">保存修改</button>
