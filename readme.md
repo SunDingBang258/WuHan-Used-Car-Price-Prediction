@@ -30,12 +30,11 @@
 ├── docker-compose.yml        MySQL + 应用编排(已显式指定 name, 见文件注释)
 ├── .dockerignore             构建上下文排除 data/ 等, 避免把凭据与大数据打进镜像
 ├── requirements.txt          运行时依赖
-├── requirements-dev.txt      含测试与 ruff
+├── requirements-dev.txt      含测试依赖
 └── .env.example              环境变量样例(复制成 .env 后填写)
 ```
 
-项目里**没有 pytest.ini / ruff.toml**：测试只用了 `skipif` 这类内置 marker，不需要注册；
-ruff 直接用默认规则集，所以也不需要配置文件。
+项目里**没有 pytest.ini**：测试只用了 `skipif` 这类内置 marker，不需要注册。
 
 ## 本地运行
 
@@ -106,36 +105,34 @@ pytest                               # 全量
 pytest --cov=app --cov-report=term-missing
 ```
 
-`tests/test_database_config.py` 是纯配置逻辑测试，不需要数据库也能单独跑。
+测试按 CI 阶段分目录存放，跑某一阶段的测试就是跑对应目录。
 
-| 测试文件 | 覆盖内容 |
+| 目录 | 覆盖内容 |
 |---|---|
-| `tests/test_database_config.py` | 连接串拼接、密码转义、缺配置报错 |
-| `tests/test_crud.py` | 数据访问层增删改查与分页 |
-| `tests/test_health.py` | 健康探针(含 MySQL 方言断言)、OpenAPI 文档 |
-| `tests/test_cars_api.py` | JSON API 全流程与参数校验 |
-| `tests/test_cars_pages.py` | HTML 表单渲染/提交/编辑/删除 |
-| `tests/test_mysql_integration.py` | MySQL 方言、utf8mb4 中文与 emoji 往返 |
-| `tests/test_app_smoke.py` | 应用冒烟: 健康探针 / 首页 / CRUD 串联(TestClient, 进程内) |
+| `tests/stage_feature/` | **配置与数据层**：连接串拼接、缺配置报错、引擎方言、健康探针、CRUD、名称查表 |
+| `tests/stage_dev/` | **接口与页面**：JSON API 全流程与校验、HTML 表单渲染/提交/编辑/删除 |
+| `tests/stage_staging/` | **应用冒烟**：首页、健康探针、CRUD 全链路串跑(TestClient, 进程内) |
+
+`tests/stage_feature/test_config.py` 是纯配置逻辑测试，不需要数据库也能单独跑。
 
 ## 分支与流水线
 
 > 课程文档里提到的分支链路是：**feature 分支 → dev 分支 → staging 分支 → main 主分支**。
 > 这四个分支已创建好，可以直接切换（原 `readme.md` 的记录保留于此）。
 
-| 分支 | 流水线 | 做什么 | 测试文件 |
+| 分支 | 流水线 | 做什么 | 跑哪些测试 |
 |---|---|---|---|
-| `feature/**` | `01-feature-ci.yml` | 代码风格 + 数据层测试(带 MySQL 容器) | `test_database_config.py`、`test_crud.py`、`test_health.py` |
-| `dev` | `02-dev-ci.yml` | 全量回归 + 覆盖率门槛 85% | 上述 + `test_cars_api.py`、`test_cars_pages.py`、`test_mysql_integration.py` |
-| `staging` | `03-staging-deploy.yml` | 构建镜像 → 起 MySQL+应用 → curl 打真实容器 + 冒烟测试 | `test_app_smoke.py` |
-| `main` | `04-main-release.yml` | 全量回归 → 构建并推送镜像 → 打 tag 发 Release | 全量 |
+| `feature/**` | `01-feature-ci.yml` | 数据层测试(带 MySQL 容器) | `tests/stage_feature` |
+| `dev` | `02-dev-ci.yml` | 回归 + 覆盖率门槛 85% | `tests/stage_feature` + `tests/stage_dev` |
+| `staging` | `03-staging-deploy.yml` | 构建镜像 → 起 MySQL+应用 → curl 打真实容器 + 冒烟测试 | `tests/stage_staging` |
+| `main` | `04-main-release.yml` | 全量回归 → 构建并推送镜像 → 打 tag 发 Release | 三个目录全跑 |
 
 `03-staging-deploy.yml` 里真正验证「跑起来的容器」的是两个 `curl` 步骤
-（`/api/health` 就绪等待、`/api/health/db` 连通性）；`test_app_smoke.py` 是进程内测试，
+（`/api/health` 就绪等待、`/api/health/db` 连通性）；`tests/stage_staging/` 是进程内测试，
 验证的是代码本身，不经过容器。
 
 ## 后续计划
 
-1. 接入价格预测模型: 新增 `app/predictor.py` 与 `POST /api/predict`，读取 `cars` 表里的参数做推理。
+1. 接入价格预测模型: `data/train_model.py` 产出 `app/model.joblib`，再由 `app/predictor.py` 与 `POST /api/predict` 做推理。
 2. 用 Alembic 做数据库迁移，替掉 `AUTO_CREATE_TABLES`。
-3. 把 `data/che168_wuhan_cars.csv`(DVC 管理)接入训练流程。
+3. 把 `app/model.joblib` 纳入 CI 构建（目前被 `.gitignore` 忽略，镜像里没有模型）。

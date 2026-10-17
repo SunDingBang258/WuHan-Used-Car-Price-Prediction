@@ -19,10 +19,11 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 import pytest
-from app import models
-from app.database import Base, get_engine, get_session_factory
 from fastapi.testclient import TestClient
 from sqlalchemy import delete
+
+from app import models
+from app.database import Base, get_engine, get_session_factory
 
 # 注意: 不要在这里导入 app.main —— 它在模块级就会构造应用并读取配置,
 # 会让纯配置测试也被迫要求一份可用的数据库配置。
