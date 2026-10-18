@@ -30,7 +30,7 @@
 │       └── pages.py          HTML 页面
 ├── ml/                       训练与实验跟踪
 │   ├── train.py              训练脚本(调 MLflow 记录)
-│   ├── data_pipeline.py      数据清洗 + 导出对照表
+│   ├── data_pipeline.py      数据清洗 + 导出对照表(默认 v2, `--v1` 产出第一版)
 │   ├── configs/              baseline.yaml / tuned.yaml
 │   ├── registry/             current_model.md(哪个模型是生产版)
 │   ├── README_data.md  README_experiments.md  PROVENANCE.md
@@ -41,8 +41,10 @@
 ├── docker-compose.yml        MySQL + 应用编排(已显式指定 name, 见文件注释)
 ├── .dockerignore             构建上下文排除 data/ 等, 避免把凭据与大数据打进镜像
 ├── requirements.txt          运行时依赖(含推理用的 scikit-learn)
-├── requirements-dev.txt      测试依赖 —— CI 装这个
+├── requirements-dev.txt      测试 + 静态检查依赖 —— CI 装这个
 ├── requirements-ml.txt       训练/实验跟踪依赖 —— 只有 ml/ 下的脚本需要
+├── ruff.toml                 静态检查规则集
+├── DEPLOYMENT.md             staging / production 怎么部署、要配哪些 secrets
 └── .env.example              环境变量样例(复制成 .env 后填写)
 ```
 
@@ -136,19 +138,28 @@ pytest tests/stage_feature           # 只跑某一阶段
 > 课程文档里提到的分支链路是：**feature 分支 → dev 分支 → staging 分支 → main 主分支**。
 > 这四个分支已创建好，可以直接切换（原 `readme.md` 的记录保留于此）。
 
-| 分支 | 流水线 | 做什么 | 跑哪些测试 |
+| 分支 / 事件 | 流水线 | 做什么 | 跑哪些测试 |
 |---|---|---|---|
-| `feature/**` | `01-feature-ci.yml` | 数据层测试(带 MySQL 容器) | `tests/stage_feature` |
-| `dev` | `02-dev-ci.yml` | 回归 + 覆盖率门槛 85% | `tests/stage_feature` + `tests/stage_dev` |
-| `staging` | `03-staging-deploy.yml` | 构建镜像 → 起 MySQL+应用 → curl 打真实容器 + 冒烟测试 | `tests/stage_staging` |
-| `main` | `04-main-release.yml` | 全量回归 → 构建并推送镜像 → 打 tag 发 Release | 三个目录全跑 |
+| push `feature/**` | `01-feature-ci.yml` | ruff + 构建镜像 + 数据层测试 | `tests/stage_feature` |
+| **PR → `dev`** | `01-feature-ci.yml` | ruff + 构建镜像 + **全量测试** | 全部 |
+| push `dev` | `02-dev-ci.yml` | ruff + 构建镜像 + 全量测试 | 全部 |
+| **PR → `staging`** | `02-dev-ci.yml` | ruff + 构建镜像 + 全量测试 | 全部 |
+| push `staging` | `03-staging-deploy.yml` | 生成 staging `.env` → 起真实 MySQL+应用 → curl 验证 → 冒烟测试 | `tests/stage_staging` |
+| **PR → `main`** | `04-main-release.yml` | ruff + 构建镜像 + 全量测试 | 全部 |
+| push `main` | `04-main-release.yml` | 全量测试 + 生成生产 `.env` + 构建生产镜像(部署占位) | 全部 |
+| tag `v*` | `04-main-release.yml` | 上述 + 推镜像到 Docker Hub + 发 GitHub Release | 全部 |
+
+**课程要求：PR 到受保护分支必须 ① 跑全量测试 ② 跑 lint ③ 构建 Docker 镜像** ——
+`01` / `02` / `04` 三个文件都覆盖了这三项。
 
 `03-staging-deploy.yml` 里真正验证「跑起来的容器」的是两个 `curl` 步骤
 （`/api/health` 就绪等待、`/api/health/db` 连通性）；`tests/stage_staging/` 是进程内测试，
 验证的是代码本身，不经过容器。
 
+部署细节（要配哪些 secrets、怎么接真实部署）见 [`DEPLOYMENT.md`](DEPLOYMENT.md)。
+
 ## 后续计划
 
-1. 接入价格预测模型: `data/train_model.py` 产出 `app/model.joblib`，再由 `app/predictor.py` 与 `POST /api/predict` 做推理。
-2. 用 Alembic 做数据库迁移，替掉 `AUTO_CREATE_TABLES`。
-3. 把 `app/model.joblib` 纳入 CI 构建（目前被 `.gitignore` 忽略，镜像里没有模型）。
+1. 用 Alembic 做数据库迁移，替掉 `AUTO_CREATE_TABLES`。
+2. 把 `04-main-release.yml` 的 `deploy-production` 从占位换成真实部署（SSH / K8s）。
+3. 扩充数据集版本到 v3（例如按发布时间切分）并对比模型效果。

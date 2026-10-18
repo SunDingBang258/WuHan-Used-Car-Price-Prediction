@@ -1,0 +1,18 @@
+# Ruff 配置(独立 ruff.toml 文件: 表名直接用顶层, 不带 tool.ruff. 前缀)
+#
+# CI 里跑 `ruff check app tests ml`, 用下面这组规则。
+# 显式写出来而不是依赖默认值, 这样 ruff 升级后规则集不会悄悄变。
+target-version = "py313"
+line-length = 120
+src = ["."]
+
+[lint]
+# E/W: pycodestyle 风格; F: Pyflakes 真 bug; I: import 排序; UP: 用新语法;
+# B: bugbear 常见陷阱; SIM: 可简化的写法
+select = ["E", "W", "F", "I", "UP", "B", "SIM"]
+
+[lint.per-file-ignores]
+# train.py 必须在 load_dotenv() 之后再 import dagshub, 属于有意的非顶层导入
+"ml/train.py" = ["E402"]
+# conftest.py 要先把仓库根插进 sys.path, 才能 import app.*
+"tests/conftest.py" = ["E402"]
