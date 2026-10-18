@@ -1,18 +1,21 @@
-# 本地开发与 staging 冒烟测试用的编排: MySQL + 应用
+﻿# 本地开发与 staging 冒烟测试用的编排: MySQL + 应用
 # 用法: docker compose up -d --build   /   docker compose down -v
 #
 # 必须显式写 name: —— 否则 compose 用目录名推导项目名,
 # 而本仓库目录名是中文, slug 后为空, 会直接报 "project name must not be empty"。
 name: car-predict
 
+# 数据库配置从 .env 读(compose 会自动加载同目录的 .env), 没配时用下面的默认值。
+# 注意用 MYSQL_* 这组名字, 而不是 .env 里给「宿主机直连」用的 DB_* ——
+# 两者取值不同(宿主机是 root/127.0.0.1, 容器内是普通用户/mysql), 混用会起不来。
 services:
   mysql:
     image: mysql:8.4
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: car_predict
-      MYSQL_USER: carpredict
-      MYSQL_PASSWORD: carpredict
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-car_predict}
+      MYSQL_USER: ${MYSQL_USER:-carpredict}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-carpredict}
     # 必须 utf8mb4, 否则中文以外的字符(emoji)存不进去
     command:
       - --character-set-server=utf8mb4
@@ -24,23 +27,27 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-root}"]
       interval: 5s
       timeout: 5s
       retries: 20
       start_period: 30s
 
   app:
+    # build: . 表示「用本地 Dockerfile 构建」, 不是从 Docker Hub 拉。
+    # 想直接跑 CI 推上去的镜像, 把这两行换成:
+    #   image: ${DOCKERHUB_USERNAME}/wuhan-used-car-price-prediction:latest
     build: .
     environment:
       APP_NAME: 武汉二手车价格预测
       DEBUG: "false"
       AUTO_CREATE_TABLES: "1"
+      # DB_HOST 必须是 compose 的服务名 mysql —— 容器里访问不到宿主机的 127.0.0.1
       DB_HOST: mysql
       DB_PORT: "3306"
-      DB_USER: carpredict
-      DB_PASSWORD: carpredict
-      DB_NAME: car_predict
+      DB_USER: ${MYSQL_USER:-carpredict}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-carpredict}
+      DB_NAME: ${MYSQL_DATABASE:-car_predict}
       DB_CHARSET: utf8mb4
     ports:
       - "8000:8000"
@@ -49,4 +56,6 @@ services:
         condition: service_healthy
 
 volumes:
+  # 命名卷: 首次 docker compose up 时自动创建, 名为 car-predict_mysql-data
+  # (前缀来自上面的 name:)。docker compose down 不会删它, 要删用 down -v。
   mysql-data:

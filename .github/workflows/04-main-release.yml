@@ -1,4 +1,4 @@
-name: 04 · main 发布
+﻿name: 04 · main 发布
 
 # main 是主分支: 合入即做全量回归; 打 v* 标签则构建并推送镜像 + 发 Release;
 # 推送到 main 还会走一次生产部署(environment: production 可设为需要人工审批)。
@@ -11,8 +11,8 @@ on:
   workflow_dispatch:
 
 permissions:
+  # 推送到 Docker Hub 不需要 GITHUB_TOKEN 的 packages 权限, 只需要能创建 Release
   contents: write
-  packages: write
 
 concurrency:
   group: main-release-${{ github.ref }}
@@ -65,36 +65,30 @@ jobs:
             tests/stage_staging
 
   build-and-push:
-    name: 构建并推送镜像 (ghcr.io)
+    name: 构建并推送镜像 (Docker Hub)
     needs: verify
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: 登录 GitHub Container Registry
+      - name: 登录 Docker Hub
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          # 不写 registry 就是 Docker Hub; 换成 ghcr.io 之类要显式指定
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: 生成镜像标签
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=ref,event=tag
-            type=raw,value=latest
-
-      - name: 构建并推送
-        uses: docker/build-push-action@v6
+      # 不再用 docker/metadata-action: 标签直接写死, 省掉一个 step。
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v7
         with:
           context: .
+          file: ./Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/wuhan-used-car-price-prediction:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/wuhan-used-car-price-prediction:sha-${{ github.sha }}
 
   release:
     name: 创建 GitHub Release
@@ -107,12 +101,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
-          body: |
-            镜像: `ghcr.io/${{ github.repository }}:${{ github.ref_name }}`
-
-            ## 本次内容
-            - 参数录入服务的 FastAPI 后台 + HTML 页面
-            - 全量测试已在 MySQL 上通过
 
   deploy-production:
     name: 部署到生产(需人工审批)

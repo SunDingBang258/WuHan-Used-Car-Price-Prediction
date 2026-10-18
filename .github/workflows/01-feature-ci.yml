@@ -55,9 +55,6 @@ jobs:
       - name: 安装开发依赖
         run: pip install -r requirements-dev.txt
 
-      - name: 语法编译检查
-        run: python -m compileall -q app
-
+      # 不需要单独的语法检查步骤: pytest 导入 app 时就会暴露语法/导入错误
       - name: 跑测试
-        run: |
-          pytest -q tests/stage_feature
+        run: pytest -q tests/stage_feature
