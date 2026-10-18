@@ -13,18 +13,34 @@
   6. 顺手把 品牌/车系 -> ID + 查表特征 导出成 app/reference.json
 
 应用(表单下拉 + 提交查表)读的就是第 6 步那份对照表, 所以数据变了这里一跑就同步。
+
+两个数据版本
+------------
+默认(无参数)产出 **v2**: 做车系名称规范化 + 分组过滤, 写 che168_wuhan_cars.csv,
+并同步 app/reference.json。这是训练和应用实际用的版本。
+
+    python ml/data_pipeline.py --v1
+
+产出 **v1**: 停在清洗完的原始形态 —— 不做车系名称规范化, 也不做分组过滤。
+写 che168_wuhan_cars_v1.csv, 且**不碰** app/reference.json。这是"第一版可用的数据",
+用来体现数据版本演进(v1 -> v2 的差异见 ml/README_data.md)。
 """
 import csv
 import json
 import re
 import statistics
+import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
 HERE = Path(__file__).parent
-CSV = HERE.parent / "data" / "che168_wuhan_cars.csv"
-BRAND_SRC = HERE.parent / "data" / "爬虫" / "che168_wuhan_brands.csv"
-OLD_SRC = HERE.parent / "data" / "数据处理" / "che168_wuhan_cars.raw.csv"
+DATA_DIR = HERE.parent / "data"
+
+# v1 / v2 的区别全由这个开关控制
+V1 = "--v1" in sys.argv
+CSV = DATA_DIR / ("che168_wuhan_cars_v1.csv" if V1 else "che168_wuhan_cars.csv")
+BRAND_SRC = DATA_DIR / "爬虫" / "che168_wuhan_brands.csv"
+OLD_SRC = DATA_DIR / "数据处理" / "che168_wuhan_cars.raw.csv"
 REFERENCE_FILE = HERE.parent / "app" / "reference.json"
 
 # 品牌、车系至少要有这么多条样本才保留 —— 样本太少的组, 它的"平均折价率"就是它自己
@@ -203,20 +219,24 @@ if missing_series:
 # 车系名称规范化: 同一个车系ID 只保留出现最多的那种写法
 # (车型名是文本, 同一个车系会有 "揽胜极光进口" / "揽胜极光(进口)" 这类变体,
 #  不规范化的话 车系ID <-> 车系名称 就不是一一对应, 用名字当类别特征会被拆碎)
+# v1 不做这一步 —— 这正是 v1 与 v2 的差异之一。
 series_idx = name_to_idx["车系ID"]
 series_name_idx = name_to_idx["车系名称"]
-spellings = defaultdict(Counter)
-for row in merged:
-    if row[series_name_idx]:
-        spellings[row[series_idx]][row[series_name_idx]] += 1
-canonical = {sid: c.most_common(1)[0][0] for sid, c in spellings.items()}
-fixed = sum(1 for r in merged
-            if r[series_name_idx] and canonical.get(r[series_idx]) != r[series_name_idx])
-for row in merged:
-    if row[series_name_idx]:
-        row[series_name_idx] = canonical.get(row[series_idx], row[series_name_idx])
-print(f"车系名称规范化: {len(canonical)} 个车系ID 各取最常见写法, 修正 {fixed} 条; "
-      f"规范化后 {len({r[series_name_idx] for r in merged if r[series_name_idx]})} 种")
+if V1:
+    print("v1: 跳过车系名称规范化")
+else:
+    spellings = defaultdict(Counter)
+    for row in merged:
+        if row[series_name_idx]:
+            spellings[row[series_idx]][row[series_name_idx]] += 1
+    canonical = {sid: c.most_common(1)[0][0] for sid, c in spellings.items()}
+    fixed = sum(1 for r in merged
+                if r[series_name_idx] and canonical.get(r[series_idx]) != r[series_name_idx])
+    for row in merged:
+        if row[series_name_idx]:
+            row[series_name_idx] = canonical.get(row[series_idx], row[series_name_idx])
+    print(f"车系名称规范化: {len(canonical)} 个车系ID 各取最常见写法, 修正 {fixed} 条; "
+          f"规范化后 {len({r[series_name_idx] for r in merged if r[series_name_idx]})} 种")
 
 # 站点标记统一成 0/1 (爬虫早期版本写的是 是/否, 已抓下来的数据要就地转换)
 flag_idx = name_to_idx["准新车标记(站点)"]
@@ -254,7 +274,7 @@ if any(not r[name_to_idx["品牌平均折价率(%)"]] for r in merged):
     for key, out in (("品牌ID", "品牌平均折价率(%)"), ("车系ID", "车系平均折价率(%)")):
         key_idx = name_to_idx[key]
         bucket = defaultdict(list)
-        for row, value in zip(merged, discounts):
+        for row, value in zip(merged, discounts, strict=True):
             if row[key_idx] and value is not None:
                 bucket[row[key_idx]].append(value)
         medians = {k: round(statistics.median(v), 2) for k, v in bucket.items()}
@@ -281,19 +301,24 @@ if any(not r[mid_idx] for r in merged):
           f"{min(medians.values()):.2f} ~ {max(medians.values()):.2f} 万)")
 
 # ---------------------------------------------------------------- 4) 过滤到稳定
-before = len(merged)
-while True:
-    size = len(merged)
+# v1 不做这一步 —— 这是 v1 与 v2 的第二个差异(也是 v1 行数更多的原因)。
+if V1:
+    print("v1: 跳过分组过滤(保留所有品牌/车系, 含样本量很少的组)")
+else:
+    before = len(merged)
+    while True:
+        size = len(merged)
+        for key, least in (("品牌ID", MIN_BRAND), ("车系ID", MIN_SERIES)):
+            idx = name_to_idx[key]
+            counts = Counter(r[idx] for r in merged)
+            merged = [r for r in merged if counts[r[idx]] >= least]
+        if len(merged) == size:
+            break
     for key, least in (("品牌ID", MIN_BRAND), ("车系ID", MIN_SERIES)):
-        idx = name_to_idx[key]
-        counts = Counter(r[idx] for r in merged)
-        merged = [r for r in merged if counts[r[idx]] >= least]
-    if len(merged) == size:
-        break
-for key, least in (("品牌ID", MIN_BRAND), ("车系ID", MIN_SERIES)):
-    counts = Counter(r[name_to_idx[key]] for r in merged)
-    print(f"「{key}」>= {least}: 剩 {len(counts)} 组, 最少 {min(counts.values())} 条")
-print(f"过滤共删除 {before - len(merged)} 条 ({(before - len(merged)) / before * 100:.1f}%)")
+        counts = Counter(r[name_to_idx[key]] for r in merged)
+        print(f"「{key}」>= {least}: 剩 {len(counts)} 组, 最少 {min(counts.values())} 条")
+    print(f"过滤共删除 {before - len(merged)} 条 "
+          f"({(before - len(merged)) / before * 100:.1f}%)")
 
 def _round2(text) -> float | None:
     value = _num(text)
@@ -354,5 +379,9 @@ print(f"其中类别特征(必须按类别处理): {CATEGORICAL}")
 print(f"只作展示 {len(DISPLAY_ONLY)} 个: {DISPLAY_ONLY}")
 print(f"目标: {TARGET}")
 
-# 数据集变了, 应用那份对照表必须跟着更新, 否则表单里选不到新品牌/新车系
-write_reference(merged)
+# 数据集变了, 应用那份对照表必须跟着更新, 否则表单里选不到新品牌/新车系。
+# v1 是历史版本, 不覆盖应用正在用的对照表。
+if V1:
+    print("v1: 不更新 app/reference.json(那是 v2 的产物)")
+else:
+    write_reference(merged)

@@ -43,7 +43,11 @@ from dotenv import load_dotenv
 from mlflow.models import ModelSignature
 from mlflow.types.schema import ColSpec, Schema
 from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error, r2_score
+from sklearn.metrics import (
+    mean_absolute_error,
+    mean_absolute_percentage_error,
+    r2_score,
+)
 from sklearn.model_selection import KFold
 
 ROOT = Path(__file__).resolve().parent.parent

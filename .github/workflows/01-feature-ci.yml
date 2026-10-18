@@ -1,8 +1,11 @@
 name: 01 · feature 快速校验
 
-# feature 只跑少量数据层测试, 追求快速反馈。
-# 数据库由下面的 services.mysql 提供, 连接信息通过 env 注入 ——
-# 程序与测试都只读环境变量, 不需要任何为线下测试准备的替身代码。
+# 课程要求(CI): PR 到受保护分支(dev/staging/main)时必须
+#   ① 跑全量测试  ② 跑 lint/静态检查  ③ 构建 Docker 镜像且不报错
+# 本文件负责 PR -> dev 这一环。
+#
+# push 到 feature/** 时只跑数据层子集, 追求快速反馈;
+# pull_request 时跑全量 —— 见「跑测试」那一步的 if 分支。
 on:
   push:
     branches:
@@ -52,9 +55,22 @@ jobs:
         with:
           python-version: "3.13"
           cache: pip
+
       - name: 安装开发依赖
         run: pip install -r requirements-dev.txt
 
-      # 不需要单独的语法检查步骤: pytest 导入 app 时就会暴露语法/导入错误
+      - name: 静态检查 (ruff)
+        run: ruff check app tests ml
+
+      - name: 构建镜像(验证 Dockerfile 能过)
+        run: docker build -t car-predict:ci .
+
+      # PR 到 dev 是受保护分支的合并前检查, 课程要求跑全量;
+      # push 到 feature 只是开发期反馈, 跑子集就够。
       - name: 跑测试
-        run: pytest -q tests/stage_feature
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            pytest -q tests
+          else
+            pytest -q tests/stage_feature
+          fi

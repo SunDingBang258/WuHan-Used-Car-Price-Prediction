@@ -1,6 +1,7 @@
-﻿name: 04 · main 发布
+name: 04 · main 发布
 
-# main 是主分支: 合入即做全量回归; 打 v* 标签则构建并推送镜像 + 发 Release;
+# main 是主分支: PR 到 main 时跑 lint + 全量测试 + 构建镜像(课程对 PR 的三项要求);
+# 打 v* 标签则构建并推送镜像 + 发 Release;
 # 推送到 main 还会走一次生产部署(environment: production 可设为需要人工审批)。
 on:
   push:
@@ -8,6 +9,9 @@ on:
       - main
     tags:
       - "v*"
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -56,13 +60,14 @@ jobs:
       - name: 安装开发依赖
         run: pip install -r requirements-dev.txt
 
+      - name: 静态检查 (ruff)
+        run: ruff check app tests ml
+
+      - name: 构建镜像(验证 Dockerfile 能过)
+        run: docker build -t car-predict:ci .
+
       - name: 全量测试
-        run: |
-          # 全量: 三个阶段的测试目录位置都写明(main 没有单独的测试目录)
-          pytest -q \
-            tests/stage_feature \
-            tests/stage_dev \
-            tests/stage_staging
+        run: pytest -q tests
 
   build-and-push:
     name: 构建并推送镜像 (Docker Hub)
@@ -112,6 +117,31 @@ jobs:
       url: https://car-predict.example.com
     steps:
       - uses: actions/checkout@v4
+
+      # 课程要求的流程: 用生产环境的专属 secrets 生成生产 .env, 再构建/部署。
+      # 这些 secret 配在 Settings → Environments → production 下(不是仓库级)。
+      - name: 用生产 secrets 生成 .env
+        run: |
+          cat > .env <<EOF
+          APP_NAME=武汉二手车价格预测
+          DEBUG=false
+          AUTO_CREATE_TABLES=true
+          DB_HOST=${{ secrets.PROD_DB_HOST }}
+          DB_PORT=${{ secrets.PROD_DB_PORT }}
+          DB_USER=${{ secrets.PROD_DB_USER }}
+          DB_PASSWORD=${{ secrets.PROD_DB_PASSWORD }}
+          DB_NAME=${{ secrets.PROD_DB_NAME }}
+          DB_CHARSET=utf8mb4
+          MYSQL_ROOT_PASSWORD=${{ secrets.PROD_MYSQL_ROOT_PASSWORD }}
+          MYSQL_DATABASE=${{ secrets.PROD_DB_NAME }}
+          MYSQL_USER=${{ secrets.PROD_DB_USER }}
+          MYSQL_PASSWORD=${{ secrets.PROD_DB_PASSWORD }}
+          EOF
+          echo "生产 .env 已生成($(wc -l < .env) 行), 内容不打印"
+
+      - name: 构建生产镜像
+        run: docker build -t wuhan-used-car-price-prediction:production .
+
       - name: 部署(占位, 请接入真实部署方式)
         run: |
           echo "TODO: 在这里接入真实部署(SSH / K8s / 云平台 CLI 等)"

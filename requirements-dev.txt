@@ -1,6 +1,6 @@
-# 开发/CI 额外依赖 —— 只够跑测试, 刻意不含 ML 训练用的包。
+# 开发/CI 额外依赖 —— 只够跑测试和静态检查, 刻意不含 ML 训练用的包。
 #
-# 为什么不把 mlflow / dagshub 放这里: 它们会拉进 ~77 个依赖(graphene、botocore、
+# 为什么不把 mlflow / dagshub 放这里: 它们会拉进 ~85 个依赖(graphene、botocore、
 # boto3、alembic、protobuf、opentelemetry 等), 全新 runner 上光安装就要好几分钟,
 # 而 CI 的测试根本不 import 它们(app/ 里没有任何 mlflow / dagshub 引用)。
 # 训练相关的依赖见 requirements-ml.txt。
@@ -8,3 +8,6 @@
 
 pytest==9.1.1
 httpx==0.28.1
+
+# 静态检查(课程要求 CI 必须跑 lint)。ruff 是单个 Rust 二进制, 装它只要几秒。
+ruff==0.17.1

@@ -13,6 +13,60 @@
 
 最终数据集：`data/che168_wuhan_cars.csv`，20 列，793,683 字节，由 DVC 管理。
 
+## 数据版本（v1 → v2）
+
+仓库里维护**两个数据集版本**，都由同一个脚本产出，靠 `--v1` 开关区分。
+
+| | **v1**（第一版可用） | **v2**（当前，用于训练） |
+|---|---|---|
+| 文件 | `data/che168_wuhan_cars_v1.csv` | `data/che168_wuhan_cars.csv` |
+| DVC 指针 | `data/che168_wuhan_cars_v1.csv.dvc` | `data/che168_wuhan_cars.csv.dvc` |
+| **DVC md5** | `d2b80f5b67d653d7abe741ff21e7fb1c` | `99f0c71c43a3c3a57a4545c74a2bae75` |
+| 字节 | 861,865 | 793,683 |
+| 行数 | **3408** | **3141** |
+| 车系ID 数 | **475** | **279** |
+| 车系名称种数 | **492**（同一 ID 有 17 种拼写变体） | **279**（ID↔名称一一对应） |
+| 生成命令 | `python ml\data_pipeline.py --v1` | `python ml\data_pipeline.py` |
+
+### v1 → v2 改了什么
+
+两步处理，**都只影响数据质量，不改任何原始字段含义**：
+
+**① 车系名称规范化**
+
+同一个 `车系ID` 在原始数据里会有多种写法，例如 `揽胜极光进口` / `揽胜极光(进口)`。v1 保留了这些变体，导致 **475 个车系ID 对应 492 种名称**——ID 和名称不再一一对应。v2 对每个 `车系ID` 只保留出现次数最多的写法，收敛到 **279 种名称**。
+
+为什么要做：`车系名称` 是应用做名称查表（`app/reference.json`）的键。不规范化的话用户在下拉框里会看到同一个车系的两个选项，查表也按名字走，同一台车的特征会被拆到两个"车系"里各算各的统计量。
+
+**② 分组过滤（`MIN_BRAND=5` / `MIN_SERIES=3`，定点迭代到稳定）**
+
+v1 保留了样本量很少的品牌和车系（共 475 个车系ID）。样本太少时，`品牌平均折价率` / `车系历史中位价` 这些统计量几乎就是这一两条车自己的值——**等于把目标泄漏进特征**。v2 把品牌 <5 条、车系 <3 条的组整组删掉，剩 279 个车系ID。
+
+为什么 v2 行数反而更少：删掉了 267 条（占 7.8%）样本量不足的记录。
+
+### 哪个 commit 对应哪个数据版本
+
+| 数据版本 | 对应 commit | 时间 | 说明 |
+|---|---|---|---|
+| v2（当前） | `ae3945d11a86a1c1d7644e30a4530d5146dac900` | 2026-10-17 | commit message `data update`，v2 的 `.dvc` 指针在此提交 |
+| v1 | 见 `git log -1 -- data/che168_wuhan_cars_v1.csv.dvc` | 2026-10-18 | v1 的 `.dvc` 指针首次提交的 commit |
+
+查某个版本的确切哈希：
+
+```powershell
+git log -1 --format=%H -- data/che168_wuhan_cars.csv.dvc       # v2
+git log -1 --format=%H -- data/che168_wuhan_cars_v1.csv.dvc    # v1
+```
+
+还原某个版本的数据：
+
+```powershell
+git checkout <commit> -- data/che168_wuhan_cars.csv.dvc
+dvc checkout      # 按指针从 Azure 远程拉回对应的数据文件
+```
+
+训练脚本 `ml/train.py` 读的是 **v2**，并把读到的 DVC 哈希记进 MLflow 的 `dataset_dvc_hash` 参数，所以每个 run 都能追溯到具体数据版本。
+
 ## 生成命令
 
 ```powershell
