@@ -1,0 +1,12 @@
+# 训练 / 实验跟踪依赖 —— 只有 ml/ 下的脚本需要, CI 与服务都不装这个文件。
+#
+#   pip install -r requirements-ml.txt
+#
+# 装上之后的连锁依赖约 77 个包, 所以千万别把它并进 requirements-dev.txt:
+# 那会让 CI 的 "安装开发依赖" 步骤多跑好几分钟。
+-r requirements-dev.txt
+
+pandas==3.0.6
+PyYAML==6.0.3
+mlflow==3.17.1
+dagshub==0.7.3

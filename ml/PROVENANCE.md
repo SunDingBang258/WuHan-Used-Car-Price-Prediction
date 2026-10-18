@@ -80,6 +80,10 @@ recorded = re.search(r"md5:\s*(\S+)", DVC_FILE)      # .dvc 里记的
 ## 复现方式
 
 ```powershell
+# 0) 训练依赖 —— 和跑服务的依赖分开, 别混用
+#    (requirements-ml.txt 里有 mlflow / dagshub, 会让安装集从 36 个包涨到 121 个)
+pip install -r requirements-ml.txt
+
 # 1) 数据集（从原始爬取重建，会覆盖 data/che168_wuhan_cars.csv）
 .\.venv\Scripts\python.exe ml\data_pipeline.py
 
