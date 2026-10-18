@@ -11,7 +11,7 @@ https://dagshub.com/q13297638316/WuHan-Used-Car-Price-Prediction.mlflow
 | | 基线 | 调优（生产） |
 |---|---|---|
 | run 名 | `baseline-8feat` | `tuned-11feat` |
-| run id | `b849f67dbec54312855be07e9d1e105a` | `5943ec07c33d4b49888d9507cce4de10` |
+| run id | `b478bb6006b84fe5ac84ea9d4c6de92c` | `c486a456b60648e5b609269c147e7de4` |
 | 配置文件 | `configs/baseline.yaml` | `configs/tuned.yaml` |
 | 特征数 | 8 | 11 |
 | 目标编码特征 | ✗ 不用 | ✓ 用 |

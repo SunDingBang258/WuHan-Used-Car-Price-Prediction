@@ -10,7 +10,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
-from app import __version__, crud, reference, schemas
+from app import __version__, crud, predictor, reference, schemas
 from app.config import get_settings
 from app.database import check_connection, get_db
 
@@ -53,6 +53,16 @@ def list_cars(
 ) -> schemas.CarListOut:
     items, total = crud.list_cars(db, brand=brand, skip=skip, limit=limit)
     return schemas.CarListOut(total=total, items=[schemas.CarOut.model_validate(i) for i in items])
+
+
+@router.post("/predict", response_model=schemas.PredictOut, summary="预估售价")
+def predict_price(payload: schemas.CarInput) -> schemas.PredictOut:
+    """不写库, 只把参数喂给模型返回估价。"""
+    try:
+        price = predictor.predict(**payload.model_dump())
+    except ValueError as exc:  # 品牌/车系不在 reference.json 里
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return schemas.PredictOut(price_wan=price)
 
 
 @router.post("/cars", response_model=schemas.CarOut, status_code=201, summary="新增车源参数")

@@ -103,4 +103,20 @@ button.link.danger { color: var(--danger); }
 
 .empty { color: var(--muted); }
 
-footer { color: var(--muted); font-size: 12px; text-align: center; padding: 18px; border-top: 1px solid var(--line); margin-top: 20px; }
+/* 估价结果页 */
+.price-box { text-align: center; padding: 10px 0 6px; }
+.price-label { color: var(--muted); font-size: 13px; letter-spacing: .08em; }
+.price {
+  font-size: 52px;
+  line-height: 1.15;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 6px 0 8px;
+  font-variant-numeric: tabular-nums;
+}
+.price-unit { font-size: 20px; color: var(--muted); margin-left: 8px; font-weight: 400; }
+.price-note { color: var(--muted); font-size: 13px; }
+
+.kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px 18px; }
+.kv > div { display: flex; flex-direction: column; gap: 3px; font-size: 15px; }
+.kv span { color: var(--muted); font-size: 12px; }

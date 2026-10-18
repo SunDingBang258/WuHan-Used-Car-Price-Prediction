@@ -62,6 +62,12 @@ class CarListOut(BaseModel):
     items: list[CarOut]
 
 
+class PredictOut(BaseModel):
+    """估价结果。"""
+
+    price_wan: float = Field(..., description="预估售价(万元)")
+
+
 class HealthOut(BaseModel):
     status: str
     app: str

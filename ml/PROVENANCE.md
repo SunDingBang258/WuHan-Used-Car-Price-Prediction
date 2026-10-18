@@ -26,7 +26,7 @@
                           ↓
 ⑦ 模型记录       MLflow run  +  LoggedModel     ← DagsHub
                           ↓
-⑧ 应用加载       app/model.joblib              1,546,617 字节
+⑧ 应用加载       app/model.joblib              1,545,145 字节
 ```
 
 ## 当前生产版本的全部版本号
@@ -37,9 +37,9 @@
 | 数据集 DVC hash = 实际 md5 | `99f0c71c43a3c3a57a4545c74a2bae75` |
 | 数据集行数 / 字节 | 3141 / 793,683 |
 | 配置文件 | `ml/configs/tuned.yaml` |
-| MLflow run id | `5943ec07c33d4b49888d9507cce4de10` |
-| MLflow LoggedModel | `m-ca29801c0a9d49e5b83ebaeabb651f4a` |
-| 应用模型文件 | `app/model.joblib`（1,546,617 字节） |
+| MLflow run id | `c486a456b60648e5b609269c147e7de4` |
+| MLflow LoggedModel | `m-7055a27ad9f04b14bd9f2e6de3dd0c2e` |
+| 应用模型文件 | `app/model.joblib`（1,545,145 字节） |
 | scikit-learn | 1.9.1 |
 | MLflow | 3.17.1 |
 | pandas / numpy | 3.0.6 / 2.5.4 |
