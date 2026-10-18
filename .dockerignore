@@ -1,0 +1,9 @@
+# Dockerfile 只 COPY requirements.txt / app / templates / static
+.git
+.dvc
+.idea
+.github
+tests
+data
+**/__pycache__
+.env*

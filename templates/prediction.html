@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}估价结果 · 车源 #{{ car.id }}{% endblock %}
+{% block content %}
+
+<section class="card">
+  <h2>估价结果 <small>车源 #{{ car.id }}</small></h2>
+  <div class="price-box">
+    <div class="price-label">预估售价</div>
+    <div class="price">{{ '%.2f'|format(price) }}<span class="price-unit">万元</span></div>
+    <div class="price-note">
+      {{ car.brand }} · {{ car.series }} · 车龄 {{ car.car_age_years }} 年 ·
+      表显 {{ '%.2f'|format(car.mileage_wan) }} 万公里 ｜ 仅供参考，不构成交易依据
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>提交的参数</h2>
+  <div class="kv">
+    <div><span>品牌</span>{{ car.brand }}</div>
+    <div><span>车系</span>{{ car.series }}</div>
+    <div><span>车龄(年)</span>{{ car.car_age_years }}</div>
+    <div><span>表显里程(万公里)</span>{{ '%.2f'|format(car.mileage_wan) }}</div>
+    <div><span>0次过户</span>{{ '是' if car.zero_transfer else '否' }}</div>
+    <div><span>原厂质保</span>{{ '是' if car.factory_warranty else '否' }}</div>
+    <div><span>准新车</span>{{ '是' if car.near_new else '否' }}</div>
+  </div>
+</section>
+
+<div class="actions">
+  <a class="button ghost" href="/">再估一台</a>
+  <a class="button ghost" href="/cars/{{ car.id }}/edit">修改参数</a>
+</div>
+
+{% endblock %}

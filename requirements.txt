@@ -1,0 +1,12 @@
+# 运行时依赖(生产环境只需要这些)
+fastapi==0.143.2
+uvicorn==0.54.0
+SQLAlchemy==2.1.4
+PyMySQL==1.2.3
+Jinja2==3.1.6
+python-multipart==0.0.20
+python-dotenv==1.2.4
+
+# 价格预测: 推理时要反序列化 app/model.joblib, 所以跑服务也得装
+scikit-learn==1.9.1
+joblib==1.6.0

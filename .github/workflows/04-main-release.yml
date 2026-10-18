@@ -1,0 +1,118 @@
+﻿name: 04 · main 发布
+
+# main 是主分支: 合入即做全量回归; 打 v* 标签则构建并推送镜像 + 发 Release;
+# 推送到 main 还会走一次生产部署(environment: production 可设为需要人工审批)。
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  # 推送到 Docker Hub 不需要 GITHUB_TOKEN 的 packages 权限, 只需要能创建 Release
+  contents: write
+
+concurrency:
+  group: main-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: 发布前全量回归
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: car_predict_test
+          MYSQL_USER: carpredict
+          MYSQL_PASSWORD: carpredict
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+
+    env:
+      AUTO_CREATE_TABLES: "0"
+      DB_HOST: 127.0.0.1
+      DB_PORT: "3306"
+      DB_USER: carpredict
+      DB_PASSWORD: carpredict
+      DB_NAME: car_predict_test
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: 安装开发依赖
+        run: pip install -r requirements-dev.txt
+
+      - name: 全量测试
+        run: |
+          # 全量: 三个阶段的测试目录位置都写明(main 没有单独的测试目录)
+          pytest -q \
+            tests/stage_feature \
+            tests/stage_dev \
+            tests/stage_staging
+
+  build-and-push:
+    name: 构建并推送镜像 (Docker Hub)
+    needs: verify
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 登录 Docker Hub
+        uses: docker/login-action@v3
+        with:
+          # 不写 registry 就是 Docker Hub; 换成 ghcr.io 之类要显式指定
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 不再用 docker/metadata-action: 标签直接写死, 省掉一个 step。
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/wuhan-used-car-price-prediction:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/wuhan-used-car-price-prediction:sha-${{ github.sha }}
+
+  release:
+    name: 创建 GitHub Release
+    needs: build-and-push
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 发布
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+
+  deploy-production:
+    name: 部署到生产(需人工审批)
+    needs: verify
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://car-predict.example.com
+    steps:
+      - uses: actions/checkout@v4
+      - name: 部署(占位, 请接入真实部署方式)
+        run: |
+          echo "TODO: 在这里接入真实部署(SSH / K8s / 云平台 CLI 等)"
+          echo "待部署版本: ${{ github.sha }}"

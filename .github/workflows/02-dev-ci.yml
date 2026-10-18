@@ -1,0 +1,58 @@
+name: 02 · dev 集成校验
+
+# dev 是集成分支: 全量回归。卡住这一关才允许往 staging 合。
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - staging
+  workflow_dispatch:
+
+concurrency:
+  group: dev-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: 全量测试
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: car_predict_test
+          MYSQL_USER: carpredict
+          MYSQL_PASSWORD: carpredict
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+
+    env:
+      AUTO_CREATE_TABLES: "0"
+      DB_HOST: 127.0.0.1
+      DB_PORT: "3306"
+      DB_USER: carpredict
+      DB_PASSWORD: carpredict
+      DB_NAME: car_predict_test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: 安装开发依赖
+        run: pip install -r requirements-dev.txt
+
+      - name: 全量测试
+        run: pytest -q tests/stage_feature tests/stage_dev
