@@ -1,0 +1,62 @@
+name: 03 · staging 部署与冒烟
+
+# staging 是预发布环境: 在这里构建真实镜像、起真实 MySQL + 应用,
+# 再用 HTTP 打真实服务做基本检查。staging 通过才允许合入 main。
+on:
+  push:
+    branches:
+      - staging
+  workflow_dispatch:
+
+concurrency:
+  group: staging-deploy
+  cancel-in-progress: false
+
+jobs:
+  build-and-smoke:
+    name: 构建镜像 → 起服务 → 测试
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: 安装测试依赖
+        run: pip install -r requirements-dev.txt
+
+      - name: 构建并启动 MySQL + 应用
+        run: docker compose up -d --build
+
+      - name: 等待服务就绪
+        run: |
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:8000/api/health > /dev/null; then
+              echo "应用已就绪"; exit 0
+            fi
+            echo "第 $i 次等待..."
+            sleep 3
+          done
+          echo "应用始终未就绪"
+          docker compose logs --tail=200
+          exit 1
+
+      # curl 在验证容器;
+      # 下面那个 pytest 是进程内测试, 验证的是代码本身。
+      - name: 检查数据库连通性(真实容器)
+        run: curl -fsS http://127.0.0.1:8000/api/health/db
+
+      - name: 冒烟测试
+        run: pytest -q tests/stage_staging
+
+      - name: 失败时打印容器日志
+        if: failure()
+        run: docker compose logs --tail=200
+
+      - name: 清理容器
+        if: always()
+        run: docker compose down -v

@@ -1,0 +1,1801 @@
+{
+  "_说明": "由 ml/data_pipeline.py 生成, 请勿手改",
+  "brands": {
+    "AITO 问界": {
+      "id": "609",
+      "discount_median": 34.98
+    },
+    "丰田": {
+      "id": "3",
+      "discount_median": 63.23
+    },
+    "五菱汽车": {
+      "id": "114",
+      "discount_median": 56.66
+    },
+    "保时捷": {
+      "id": "40",
+      "discount_median": 58.77
+    },
+    "凯迪拉克": {
+      "id": "47",
+      "discount_median": 71.83
+    },
+    "别克": {
+      "id": "38",
+      "discount_median": 74.13
+    },
+    "吉利汽车": {
+      "id": "25",
+      "discount_median": 65.23
+    },
+    "哈弗": {
+      "id": "181",
+      "discount_median": 63.16
+    },
+    "坦克": {
+      "id": "458",
+      "discount_median": 43.93
+    },
+    "埃安": {
+      "id": "313",
+      "discount_median": 56.11
+    },
+    "大众": {
+      "id": "1",
+      "discount_median": 69.71
+    },
+    "奇瑞": {
+      "id": "26",
+      "discount_median": 60.09
+    },
+    "奔驰": {
+      "id": "36",
+      "discount_median": 66.42
+    },
+    "奥迪": {
+      "id": "33",
+      "discount_median": 68.99
+    },
+    "宝马": {
+      "id": "15",
+      "discount_median": 71.75
+    },
+    "小米汽车": {
+      "id": "489",
+      "discount_median": 32.47
+    },
+    "小鹏": {
+      "id": "275",
+      "discount_median": 42.82
+    },
+    "广汽传祺": {
+      "id": "82",
+      "discount_median": 58.52
+    },
+    "日产": {
+      "id": "63",
+      "discount_median": 70.5
+    },
+    "本田": {
+      "id": "14",
+      "discount_median": 64.82
+    },
+    "极氪": {
+      "id": "456",
+      "discount_median": 42.13
+    },
+    "比亚迪": {
+      "id": "75",
+      "discount_median": 47.53
+    },
+    "特斯拉": {
+      "id": "133",
+      "discount_median": 50.25
+    },
+    "理想汽车": {
+      "id": "345",
+      "discount_median": 38.03
+    },
+    "红旗": {
+      "id": "91",
+      "discount_median": 62.14
+    },
+    "蔚来": {
+      "id": "284",
+      "discount_median": 54.62
+    },
+    "路虎": {
+      "id": "49",
+      "discount_median": 72.14
+    },
+    "长安": {
+      "id": "76",
+      "discount_median": 59.97
+    },
+    "零跑汽车": {
+      "id": "318",
+      "discount_median": 38.93
+    },
+    "领克": {
+      "id": "279",
+      "discount_median": 54.66
+    }
+  },
+  "series": {
+    "AION RT": {
+      "id": "7860",
+      "brand": "埃安",
+      "discount_median": 36.66,
+      "price_median": 8.48
+    },
+    "AION S": {
+      "id": "5026",
+      "brand": "埃安",
+      "discount_median": 66.23,
+      "price_median": 5.28
+    },
+    "AION S Plus": {
+      "id": "6619",
+      "brand": "埃安",
+      "discount_median": 65.84,
+      "price_median": 5.63
+    },
+    "AION V": {
+      "id": "5622",
+      "brand": "埃安",
+      "discount_median": 56.34,
+      "price_median": 8.48
+    },
+    "AION Y": {
+      "id": "5976",
+      "brand": "埃安",
+      "discount_median": 54.77,
+      "price_median": 6.68
+    },
+    "AMG GT": {
+      "id": "3451",
+      "brand": "奔驰",
+      "discount_median": 56.53,
+      "price_median": 91.34
+    },
+    "Cayenne": {
+      "id": "172",
+      "brand": "保时捷",
+      "discount_median": 70.94,
+      "price_median": 29.8
+    },
+    "Cayenne新能源": {
+      "id": "4324",
+      "brand": "保时捷",
+      "discount_median": 63.8,
+      "price_median": 37.84
+    },
+    "ID.4 CROZZ": {
+      "id": "5785",
+      "brand": "大众",
+      "discount_median": 57.34,
+      "price_median": 8.98
+    },
+    "LIFE": {
+      "id": "5842",
+      "brand": "本田",
+      "discount_median": 44.28,
+      "price_median": 6.28
+    },
+    "Macan": {
+      "id": "2838",
+      "brand": "保时捷",
+      "discount_median": 73.29,
+      "price_median": 15.98
+    },
+    "Model 3": {
+      "id": "5346",
+      "brand": "特斯拉",
+      "discount_median": 52.71,
+      "price_median": 12.28
+    },
+    "Model 3进口": {
+      "id": "4078",
+      "brand": "特斯拉",
+      "discount_median": 79.21,
+      "price_median": 9.5
+    },
+    "Model Y": {
+      "id": "5769",
+      "brand": "特斯拉",
+      "discount_median": 47.71,
+      "price_median": 14.98
+    },
+    "Panamera": {
+      "id": "703",
+      "brand": "保时捷",
+      "discount_median": 50.01,
+      "price_median": 58.3
+    },
+    "Polo": {
+      "id": "145",
+      "brand": "大众",
+      "discount_median": 69.71,
+      "price_median": 2.88
+    },
+    "RAV4荣放": {
+      "id": "770",
+      "brand": "丰田",
+      "discount_median": 74.39,
+      "price_median": 5.9
+    },
+    "T-ROC探歌": {
+      "id": "4674",
+      "brand": "大众",
+      "discount_median": 70.33,
+      "price_median": 5.5
+    },
+    "Taycan": {
+      "id": "4867",
+      "brand": "保时捷",
+      "discount_median": 42.76,
+      "price_median": 55.8
+    },
+    "YARiS L 致炫": {
+      "id": "3126",
+      "brand": "丰田",
+      "discount_median": 50.97,
+      "price_median": 4.78
+    },
+    "一汽-大众CC": {
+      "id": "905",
+      "brand": "大众",
+      "discount_median": 87.6,
+      "price_median": 4.09
+    },
+    "世纪": {
+      "id": "7010",
+      "brand": "别克",
+      "discount_median": 49.1,
+      "price_median": 32.39
+    },
+    "五菱宏光": {
+      "id": "2139",
+      "brand": "五菱汽车",
+      "discount_median": 64.77,
+      "price_median": 1.88
+    },
+    "五菱宏光V": {
+      "id": "5174",
+      "brand": "五菱汽车",
+      "discount_median": 47.99,
+      "price_median": 2.98
+    },
+    "五菱缤果": {
+      "id": "7045",
+      "brand": "五菱汽车",
+      "discount_median": 51.04,
+      "price_median": 4.48
+    },
+    "五菱荣光": {
+      "id": "2451",
+      "brand": "五菱汽车",
+      "discount_median": 67.36,
+      "price_median": 1.58
+    },
+    "五菱荣光S": {
+      "id": "6218",
+      "brand": "五菱汽车",
+      "discount_median": 56.66,
+      "price_median": 2.18
+    },
+    "亚洲龙": {
+      "id": "4962",
+      "brand": "丰田",
+      "discount_median": 52.44,
+      "price_median": 12.13
+    },
+    "传祺GS3": {
+      "id": "3495",
+      "brand": "广汽传祺",
+      "discount_median": 53.85,
+      "price_median": 4.8
+    },
+    "传祺GS4": {
+      "id": "3691",
+      "brand": "广汽传祺",
+      "discount_median": 71.93,
+      "price_median": 3.85
+    },
+    "传祺GS8": {
+      "id": "4094",
+      "brand": "广汽传祺",
+      "discount_median": 56.75,
+      "price_median": 9.78
+    },
+    "传祺M6": {
+      "id": "4662",
+      "brand": "广汽传祺",
+      "discount_median": 37.73,
+      "price_median": 8.38
+    },
+    "传祺M8": {
+      "id": "4174",
+      "brand": "广汽传祺",
+      "discount_median": 62.04,
+      "price_median": 9.88
+    },
+    "保时捷718": {
+      "id": "4175",
+      "brand": "保时捷",
+      "discount_median": 49.78,
+      "price_median": 30.8
+    },
+    "保时捷911": {
+      "id": "162",
+      "brand": "保时捷",
+      "discount_median": 34.36,
+      "price_median": 107.8
+    },
+    "元PLUS": {
+      "id": "6298",
+      "brand": "比亚迪",
+      "discount_median": 46.06,
+      "price_median": 7.79
+    },
+    "元Pro": {
+      "id": "6073",
+      "brand": "比亚迪",
+      "discount_median": 68.84,
+      "price_median": 4.38
+    },
+    "兰德酷路泽(进口)": {
+      "id": "550",
+      "brand": "丰田",
+      "discount_median": null,
+      "price_median": 58.88
+    },
+    "冠道": {
+      "id": "4102",
+      "brand": "本田",
+      "discount_median": 63.85,
+      "price_median": 10.98
+    },
+    "凌派": {
+      "id": "3085",
+      "brand": "本田",
+      "discount_median": 75.46,
+      "price_median": 3.19
+    },
+    "凌渡": {
+      "id": "3457",
+      "brand": "大众",
+      "discount_median": 54.89,
+      "price_median": 7.88
+    },
+    "凯美瑞": {
+      "id": "110",
+      "brand": "丰田",
+      "discount_median": 74.27,
+      "price_median": 5.8
+    },
+    "凯迪拉克ATS-L": {
+      "id": "3207",
+      "brand": "凯迪拉克",
+      "discount_median": 85.64,
+      "price_median": 4.58
+    },
+    "凯迪拉克CT4": {
+      "id": "5593",
+      "brand": "凯迪拉克",
+      "discount_median": 71.83,
+      "price_median": 7.42
+    },
+    "凯迪拉克CT5": {
+      "id": "5349",
+      "brand": "凯迪拉克",
+      "discount_median": 63.95,
+      "price_median": 11.63
+    },
+    "凯迪拉克CT6": {
+      "id": "3802",
+      "brand": "凯迪拉克",
+      "discount_median": 75.17,
+      "price_median": 12.68
+    },
+    "凯迪拉克XT4": {
+      "id": "4856",
+      "brand": "凯迪拉克",
+      "discount_median": 75.76,
+      "price_median": 8.33
+    },
+    "凯迪拉克XT5": {
+      "id": "3989",
+      "brand": "凯迪拉克",
+      "discount_median": 71.29,
+      "price_median": 10.99
+    },
+    "凯迪拉克XT6": {
+      "id": "5102",
+      "brand": "凯迪拉克",
+      "discount_median": 68.99,
+      "price_median": 14.13
+    },
+    "凯迪拉克XTS": {
+      "id": "2949",
+      "brand": "凯迪拉克",
+      "discount_median": 81.76,
+      "price_median": 6.39
+    },
+    "别克E5": {
+      "id": "7043",
+      "brand": "别克",
+      "discount_median": 45.27,
+      "price_median": 11.28
+    },
+    "别克GL6": {
+      "id": "4487",
+      "brand": "别克",
+      "discount_median": 76.02,
+      "price_median": 4.08
+    },
+    "别克GL8": {
+      "id": "166",
+      "brand": "别克",
+      "discount_median": 62.47,
+      "price_median": 11.54
+    },
+    "别克GL8新能源": {
+      "id": "7658",
+      "brand": "别克",
+      "discount_median": 30.41,
+      "price_median": 21.9
+    },
+    "博瑞": {
+      "id": "3589",
+      "brand": "吉利汽车",
+      "discount_median": 84.65,
+      "price_median": 2.28
+    },
+    "博越": {
+      "id": "3788",
+      "brand": "吉利汽车",
+      "discount_median": 79.31,
+      "price_median": 2.69
+    },
+    "博越L": {
+      "id": "6814",
+      "brand": "吉利汽车",
+      "discount_median": 33.44,
+      "price_median": 9.23
+    },
+    "卡罗拉": {
+      "id": "526",
+      "brand": "丰田",
+      "discount_median": 64.12,
+      "price_median": 4.94
+    },
+    "发现": {
+      "id": "802",
+      "brand": "路虎",
+      "discount_median": 80.53,
+      "price_median": 17.38
+    },
+    "发现神行": {
+      "id": "3871",
+      "brand": "路虎",
+      "discount_median": 87.89,
+      "price_median": 5.34
+    },
+    "发现运动": {
+      "id": "5536",
+      "brand": "路虎",
+      "discount_median": 75.7,
+      "price_median": 10.74
+    },
+    "吉利ICON": {
+      "id": "4813",
+      "brand": "吉利汽车",
+      "discount_median": 61.7,
+      "price_median": 5.4
+    },
+    "君威": {
+      "id": "164",
+      "brand": "别克",
+      "discount_median": 88.02,
+      "price_median": 2.99
+    },
+    "君越": {
+      "id": "834",
+      "brand": "别克",
+      "discount_median": 82.74,
+      "price_median": 4.92
+    },
+    "哈弗H2": {
+      "id": "2615",
+      "brand": "哈弗",
+      "discount_median": 87.8,
+      "price_median": 1.4
+    },
+    "哈弗H6": {
+      "id": "2123",
+      "brand": "哈弗",
+      "discount_median": 64.5,
+      "price_median": 4.48
+    },
+    "哈弗H9": {
+      "id": "3298",
+      "brand": "哈弗",
+      "discount_median": 71.45,
+      "price_median": 7.48
+    },
+    "哈弗M6": {
+      "id": "4485",
+      "brand": "哈弗",
+      "discount_median": 44.65,
+      "price_median": 5.28
+    },
+    "哈弗枭龙MAX": {
+      "id": "7150",
+      "brand": "哈弗",
+      "discount_median": 42.59,
+      "price_median": 9.98
+    },
+    "唐新能源": {
+      "id": "3430",
+      "brand": "比亚迪",
+      "discount_median": 59.35,
+      "price_median": 9.7
+    },
+    "嘉际": {
+      "id": "4396",
+      "brand": "吉利汽车",
+      "discount_median": 69.85,
+      "price_median": 3.92
+    },
+    "坦克300": {
+      "id": "5810",
+      "brand": "坦克",
+      "discount_median": 45.37,
+      "price_median": 13.38
+    },
+    "坦克400新能源": {
+      "id": "7213",
+      "brand": "坦克",
+      "discount_median": 39.46,
+      "price_median": 18.88
+    },
+    "坦克500新能源": {
+      "id": "6653",
+      "brand": "坦克",
+      "discount_median": 36.07,
+      "price_median": 24.39
+    },
+    "埃尔法": {
+      "id": "2107",
+      "brand": "丰田",
+      "discount_median": 60.37,
+      "price_median": 34.8
+    },
+    "夏朗": {
+      "id": "86",
+      "brand": "大众",
+      "discount_median": 78.68,
+      "price_median": 6.64
+    },
+    "大众ID.3": {
+      "id": "6265",
+      "brand": "大众",
+      "discount_median": 61.59,
+      "price_median": 7.2
+    },
+    "天籁": {
+      "id": "634",
+      "brand": "日产",
+      "discount_median": 76.22,
+      "price_median": 4.88
+    },
+    "奇骏": {
+      "id": "656",
+      "brand": "日产",
+      "discount_median": 70.76,
+      "price_median": 6.38
+    },
+    "奔驰A级": {
+      "id": "4764",
+      "brand": "奔驰",
+      "discount_median": 70.72,
+      "price_median": 7.7
+    },
+    "奔驰CLA进口": {
+      "id": "2966",
+      "brand": "奔驰",
+      "discount_median": 73.08,
+      "price_median": 8.41
+    },
+    "奔驰C级": {
+      "id": "588",
+      "brand": "奔驰",
+      "discount_median": 69.07,
+      "price_median": 11.28
+    },
+    "奔驰E级": {
+      "id": "197",
+      "brand": "奔驰",
+      "discount_median": 62.14,
+      "price_median": 19.99
+    },
+    "奔驰E级进口": {
+      "id": "450",
+      "brand": "奔驰",
+      "discount_median": 64.79,
+      "price_median": 20.43
+    },
+    "奔驰GLA": {
+      "id": "3248",
+      "brand": "奔驰",
+      "discount_median": 86.75,
+      "price_median": 3.95
+    },
+    "奔驰GLB": {
+      "id": "5348",
+      "brand": "奔驰",
+      "discount_median": 64.41,
+      "price_median": 11.98
+    },
+    "奔驰GLC": {
+      "id": "3862",
+      "brand": "奔驰",
+      "discount_median": 62.03,
+      "price_median": 17.48
+    },
+    "奔驰GLC轿跑": {
+      "id": "3339",
+      "brand": "奔驰",
+      "discount_median": 72.04,
+      "price_median": 13.83
+    },
+    "奔驰GLE(进口)": {
+      "id": "3683",
+      "brand": "奔驰",
+      "discount_median": 55.66,
+      "price_median": 35.61
+    },
+    "奔驰GLS": {
+      "id": "3688",
+      "brand": "奔驰",
+      "discount_median": 64.77,
+      "price_median": 24.38
+    },
+    "奔驰G级": {
+      "id": "60",
+      "brand": "奔驰",
+      "discount_median": 28.84,
+      "price_median": 128.8
+    },
+    "奔驰G级AMG": {
+      "id": "2723",
+      "brand": "奔驰",
+      "discount_median": 49.4,
+      "price_median": 135.0
+    },
+    "奔驰SLK级": {
+      "id": "267",
+      "brand": "奔驰",
+      "discount_median": 92.67,
+      "price_median": 4.68
+    },
+    "奔驰S级": {
+      "id": "59",
+      "brand": "奔驰",
+      "discount_median": 58.36,
+      "price_median": 45.8
+    },
+    "奔驰S级AMG": {
+      "id": "2197",
+      "brand": "奔驰",
+      "discount_median": 68.76,
+      "price_median": 78.8
+    },
+    "奔驰V级": {
+      "id": "3823",
+      "brand": "奔驰",
+      "discount_median": 70.52,
+      "price_median": 18.48
+    },
+    "奕泽IZOA": {
+      "id": "4646",
+      "brand": "丰田",
+      "discount_median": 64.28,
+      "price_median": 6.08
+    },
+    "奥德赛": {
+      "id": "880",
+      "brand": "本田",
+      "discount_median": 70.69,
+      "price_median": 7.95
+    },
+    "奥迪A3": {
+      "id": "3170",
+      "brand": "奥迪",
+      "discount_median": 69.89,
+      "price_median": 6.38
+    },
+    "奥迪A4L": {
+      "id": "692",
+      "brand": "奥迪",
+      "discount_median": 69.77,
+      "price_median": 11.38
+    },
+    "奥迪A5(进口)": {
+      "id": "538",
+      "brand": "奥迪",
+      "discount_median": 76.26,
+      "price_median": 9.58
+    },
+    "奥迪A6L": {
+      "id": "18",
+      "brand": "奥迪",
+      "discount_median": 62.98,
+      "price_median": 18.09
+    },
+    "奥迪A7L": {
+      "id": "5998",
+      "brand": "奥迪",
+      "discount_median": 56.44,
+      "price_median": 19.8
+    },
+    "奥迪A8": {
+      "id": "146",
+      "brand": "奥迪",
+      "discount_median": 64.47,
+      "price_median": 32.5
+    },
+    "奥迪Q2L": {
+      "id": "4871",
+      "brand": "奥迪",
+      "discount_median": 70.55,
+      "price_median": 7.89
+    },
+    "奥迪Q3": {
+      "id": "2951",
+      "brand": "奥迪",
+      "discount_median": 76.05,
+      "price_median": 7.58
+    },
+    "奥迪Q5": {
+      "id": "812",
+      "brand": "奥迪",
+      "discount_median": 88.9,
+      "price_median": 5.29
+    },
+    "奥迪Q5L": {
+      "id": "4851",
+      "brand": "奥迪",
+      "discount_median": 63.85,
+      "price_median": 16.39
+    },
+    "奥迪Q6": {
+      "id": "6526",
+      "brand": "奥迪",
+      "discount_median": 57.35,
+      "price_median": 23.5
+    },
+    "奥迪Q7": {
+      "id": "412",
+      "brand": "奥迪",
+      "discount_median": 69.87,
+      "price_median": 25.8
+    },
+    "奥迪Q8": {
+      "id": "4288",
+      "brand": "奥迪",
+      "discount_median": 70.91,
+      "price_median": 28.38
+    },
+    "奥迪TT": {
+      "id": "148",
+      "brand": "奥迪",
+      "discount_median": 88.64,
+      "price_median": 6.68
+    },
+    "威尔法": {
+      "id": "3718",
+      "brand": "丰田",
+      "discount_median": 24.16,
+      "price_median": 74.0
+    },
+    "威朗": {
+      "id": "3751",
+      "brand": "别克",
+      "discount_median": 72.55,
+      "price_median": 4.17
+    },
+    "威然": {
+      "id": "5445",
+      "brand": "大众",
+      "discount_median": 56.3,
+      "price_median": 16.24
+    },
+    "威霆": {
+      "id": "2084",
+      "brand": "奔驰",
+      "discount_median": 54.2,
+      "price_median": 15.16
+    },
+    "宋L EV": {
+      "id": "7220",
+      "brand": "比亚迪",
+      "discount_median": 50.11,
+      "price_median": 12.45
+    },
+    "宋PLUS新能源": {
+      "id": "5761",
+      "brand": "比亚迪",
+      "discount_median": 56.05,
+      "price_median": 7.98
+    },
+    "宋Pro新能源": {
+      "id": "5279",
+      "brand": "比亚迪",
+      "discount_median": 49.83,
+      "price_median": 6.68
+    },
+    "宏光MINIEV": {
+      "id": "5714",
+      "brand": "五菱汽车",
+      "discount_median": 60.25,
+      "price_median": 1.89
+    },
+    "宝来": {
+      "id": "633",
+      "brand": "大众",
+      "discount_median": 72.1,
+      "price_median": 3.93
+    },
+    "宝马2系进口": {
+      "id": "3230",
+      "brand": "宝马",
+      "discount_median": 72.76,
+      "price_median": 9.5
+    },
+    "宝马3系": {
+      "id": "66",
+      "brand": "宝马",
+      "discount_median": 71.32,
+      "price_median": 10.8
+    },
+    "宝马4系": {
+      "id": "2968",
+      "brand": "宝马",
+      "discount_median": 55.35,
+      "price_median": 19.14
+    },
+    "宝马5系": {
+      "id": "65",
+      "brand": "宝马",
+      "discount_median": 66.92,
+      "price_median": 16.24
+    },
+    "宝马5系GT": {
+      "id": "2847",
+      "brand": "宝马",
+      "discount_median": 95.59,
+      "price_median": 3.98
+    },
+    "宝马6系GT": {
+      "id": "4472",
+      "brand": "宝马",
+      "discount_median": 74.16,
+      "price_median": 16.88
+    },
+    "宝马7系": {
+      "id": "153",
+      "brand": "宝马",
+      "discount_median": 74.16,
+      "price_median": 27.74
+    },
+    "宝马X1": {
+      "id": "2561",
+      "brand": "宝马",
+      "discount_median": 79.76,
+      "price_median": 7.12
+    },
+    "宝马X3": {
+      "id": "4658",
+      "brand": "宝马",
+      "discount_median": 66.5,
+      "price_median": 15.5
+    },
+    "宝马X3(进口)": {
+      "id": "271",
+      "brand": "宝马",
+      "discount_median": 92.03,
+      "price_median": 3.98
+    },
+    "宝马X4": {
+      "id": "3053",
+      "brand": "宝马",
+      "discount_median": 66.9,
+      "price_median": 16.38
+    },
+    "宝马X5": {
+      "id": "6548",
+      "brand": "宝马",
+      "discount_median": 42.89,
+      "price_median": 39.98
+    },
+    "宝马X5进口": {
+      "id": "159",
+      "brand": "宝马",
+      "discount_median": 88.84,
+      "price_median": 9.98
+    },
+    "宝马X6": {
+      "id": "587",
+      "brand": "宝马",
+      "discount_median": 89.86,
+      "price_median": 10.98
+    },
+    "宝马X7": {
+      "id": "3362",
+      "brand": "宝马",
+      "discount_median": 55.7,
+      "price_median": 50.89
+    },
+    "宝马Z4": {
+      "id": "161",
+      "brand": "宝马",
+      "discount_median": 64.57,
+      "price_median": 18.8
+    },
+    "宝马i3": {
+      "id": "6544",
+      "brand": "宝马",
+      "discount_median": 70.5,
+      "price_median": 11.57
+    },
+    "宝马iX3": {
+      "id": "5758",
+      "brand": "宝马",
+      "discount_median": 72.58,
+      "price_median": 13.25
+    },
+    "小米SU7": {
+      "id": "6962",
+      "brand": "小米汽车",
+      "discount_median": 36.09,
+      "price_median": 17.88
+    },
+    "小米SU7 Ultra": {
+      "id": "7915",
+      "brand": "小米汽车",
+      "discount_median": 29.62,
+      "price_median": 40.48
+    },
+    "小米YU7": {
+      "id": "7793",
+      "brand": "小米汽车",
+      "discount_median": 23.23,
+      "price_median": 21.86
+    },
+    "小鹏G3": {
+      "id": "4489",
+      "brand": "小鹏",
+      "discount_median": 66.55,
+      "price_median": 6.48
+    },
+    "小鹏G6": {
+      "id": "7162",
+      "brand": "小鹏",
+      "discount_median": 44.23,
+      "price_median": 12.43
+    },
+    "小鹏G7": {
+      "id": "8014",
+      "brand": "小鹏",
+      "discount_median": 31.01,
+      "price_median": 16.19
+    },
+    "小鹏G9": {
+      "id": "6492",
+      "brand": "小鹏",
+      "discount_median": 53.35,
+      "price_median": 15.57
+    },
+    "小鹏GX": {
+      "id": "8224",
+      "brand": "小鹏",
+      "discount_median": 12.04,
+      "price_median": 29.58
+    },
+    "小鹏MONA M03": {
+      "id": "6998",
+      "brand": "小鹏",
+      "discount_median": 38.72,
+      "price_median": 8.62
+    },
+    "小鹏P5": {
+      "id": "6095",
+      "brand": "小鹏",
+      "discount_median": 66.2,
+      "price_median": 6.63
+    },
+    "小鹏P7": {
+      "id": "5213",
+      "brand": "小鹏",
+      "discount_median": 56.95,
+      "price_median": 12.58
+    },
+    "小鹏P7+": {
+      "id": "7554",
+      "brand": "小鹏",
+      "discount_median": 36.49,
+      "price_median": 12.88
+    },
+    "小鹏X9": {
+      "id": "7067",
+      "brand": "小鹏",
+      "discount_median": 33.68,
+      "price_median": 25.34
+    },
+    "尚酷": {
+      "id": "669",
+      "brand": "大众",
+      "discount_median": 90.81,
+      "price_median": 3.28
+    },
+    "帕萨特": {
+      "id": "528",
+      "brand": "大众",
+      "discount_median": 64.49,
+      "price_median": 8.44
+    },
+    "帝豪": {
+      "id": "3556",
+      "brand": "吉利汽车",
+      "discount_median": 67.29,
+      "price_median": 2.8
+    },
+    "帝豪GL": {
+      "id": "4139",
+      "brand": "吉利汽车",
+      "discount_median": 86.31,
+      "price_median": 1.45
+    },
+    "影豹": {
+      "id": "5944",
+      "brand": "广汽传祺",
+      "discount_median": 65.59,
+      "price_median": 4.73
+    },
+    "微蓝6": {
+      "id": "4776",
+      "brand": "别克",
+      "discount_median": 63.15,
+      "price_median": 4.88
+    },
+    "思域": {
+      "id": "135",
+      "brand": "本田",
+      "discount_median": 67.01,
+      "price_median": 4.98
+    },
+    "思铂睿": {
+      "id": "859",
+      "brand": "本田",
+      "discount_median": 89.6,
+      "price_median": 2.93
+    },
+    "探岳": {
+      "id": "4744",
+      "brand": "大众",
+      "discount_median": 54.0,
+      "price_median": 10.59
+    },
+    "揽境": {
+      "id": "5245",
+      "brand": "大众",
+      "discount_median": 61.3,
+      "price_median": 16.38
+    },
+    "揽胜": {
+      "id": "69",
+      "brand": "路虎",
+      "discount_median": 63.29,
+      "price_median": 55.5
+    },
+    "揽胜星脉": {
+      "id": "4316",
+      "brand": "路虎",
+      "discount_median": 67.61,
+      "price_median": 19.98
+    },
+    "揽胜极光": {
+      "id": "3521",
+      "brand": "路虎",
+      "discount_median": 77.99,
+      "price_median": 9.98
+    },
+    "揽胜极光进口": {
+      "id": "754",
+      "brand": "路虎",
+      "discount_median": 94.37,
+      "price_median": 3.9
+    },
+    "揽胜运动": {
+      "id": "850",
+      "brand": "路虎",
+      "discount_median": 72.74,
+      "price_median": 24.1
+    },
+    "日产GT-R": {
+      "id": "436",
+      "brand": "日产",
+      "discount_median": 80.16,
+      "price_median": 31.88
+    },
+    "日产N7": {
+      "id": "7935",
+      "brand": "日产",
+      "discount_median": 33.07,
+      "price_median": 10.38
+    },
+    "昂科威Plus": {
+      "id": "3554",
+      "brand": "别克",
+      "discount_median": 80.89,
+      "price_median": 5.13
+    },
+    "昂科威S": {
+      "id": "8038",
+      "brand": "别克",
+      "discount_median": 60.34,
+      "price_median": 9.44
+    },
+    "昂科拉": {
+      "id": "2896",
+      "brand": "别克",
+      "discount_median": 92.28,
+      "price_median": 1.65
+    },
+    "昂科旗": {
+      "id": "5395",
+      "brand": "别克",
+      "discount_median": 74.46,
+      "price_median": 9.38
+    },
+    "星瑞": {
+      "id": "5273",
+      "brand": "吉利汽车",
+      "discount_median": 62.41,
+      "price_median": 5.49
+    },
+    "星越L": {
+      "id": "6004",
+      "brand": "吉利汽车",
+      "discount_median": 51.31,
+      "price_median": 8.68
+    },
+    "普拉多": {
+      "id": "46",
+      "brand": "丰田",
+      "discount_median": 64.59,
+      "price_median": 18.28
+    },
+    "普拉多(进口)": {
+      "id": "334",
+      "brand": "丰田",
+      "discount_median": 69.14,
+      "price_median": 20.84
+    },
+    "朗逸": {
+      "id": "614",
+      "brand": "大众",
+      "discount_median": 69.6,
+      "price_median": 4.63
+    },
+    "本田CR-V": {
+      "id": "314",
+      "brand": "本田",
+      "discount_median": 65.01,
+      "price_median": 7.09
+    },
+    "本田UR-V": {
+      "id": "4304",
+      "brand": "本田",
+      "discount_median": 71.96,
+      "price_median": 8.54
+    },
+    "本田XR-V": {
+      "id": "3582",
+      "brand": "本田",
+      "discount_median": 52.18,
+      "price_median": 7.68
+    },
+    "杰德": {
+      "id": "3104",
+      "brand": "本田",
+      "discount_median": 75.07,
+      "price_median": 4.24
+    },
+    "极氪001": {
+      "id": "6091",
+      "brand": "极氪",
+      "discount_median": 58.97,
+      "price_median": 13.98
+    },
+    "极氪007": {
+      "id": "7491",
+      "brand": "极氪",
+      "discount_median": 52.9,
+      "price_median": 12.24
+    },
+    "极氪007GT": {
+      "id": "8010",
+      "brand": "极氪",
+      "discount_median": 38.69,
+      "price_median": 13.5
+    },
+    "极氪009": {
+      "id": "6846",
+      "brand": "极氪",
+      "discount_median": 36.61,
+      "price_median": 31.28
+    },
+    "极氪7X": {
+      "id": "7777",
+      "brand": "极氪",
+      "discount_median": 45.12,
+      "price_median": 14.28
+    },
+    "极氪8X": {
+      "id": "8148",
+      "brand": "极氪",
+      "discount_median": 19.36,
+      "price_median": 32.98
+    },
+    "极氪9X": {
+      "id": "7835",
+      "brand": "极氪",
+      "discount_median": 17.95,
+      "price_median": 43.98
+    },
+    "极氪MIX": {
+      "id": "7631",
+      "brand": "极氪",
+      "discount_median": 40.82,
+      "price_median": 17.98
+    },
+    "歌诗图": {
+      "id": "2168",
+      "brand": "本田",
+      "discount_median": 87.59,
+      "price_median": 3.58
+    },
+    "比亚迪e2": {
+      "id": "5238",
+      "brand": "比亚迪",
+      "discount_median": 60.75,
+      "price_median": 4.38
+    },
+    "汉": {
+      "id": "5499",
+      "brand": "比亚迪",
+      "discount_median": 65.12,
+      "price_median": 9.38
+    },
+    "汉L": {
+      "id": "7859",
+      "brand": "比亚迪",
+      "discount_median": 43.6,
+      "price_median": 16.98
+    },
+    "汉兰达": {
+      "id": "771",
+      "brand": "丰田",
+      "discount_median": 71.59,
+      "price_median": 8.18
+    },
+    "海狮05 EV": {
+      "id": "7982",
+      "brand": "比亚迪",
+      "discount_median": 38.72,
+      "price_median": 8.5
+    },
+    "海狮06": {
+      "id": "8087",
+      "brand": "比亚迪",
+      "discount_median": 18.5,
+      "price_median": 12.68
+    },
+    "海豚": {
+      "id": "6139",
+      "brand": "比亚迪",
+      "discount_median": 47.8,
+      "price_median": 6.05
+    },
+    "海豹": {
+      "id": "6394",
+      "brand": "比亚迪",
+      "discount_median": 58.16,
+      "price_median": 9.48
+    },
+    "海豹06": {
+      "id": "7588",
+      "brand": "比亚迪",
+      "discount_median": 38.62,
+      "price_median": 7.98
+    },
+    "海豹06GT": {
+      "id": "7694",
+      "brand": "比亚迪",
+      "discount_median": 44.54,
+      "price_median": 9.8
+    },
+    "海豹07 DM-i": {
+      "id": "7822",
+      "brand": "比亚迪",
+      "discount_median": 36.0,
+      "price_median": 12.98
+    },
+    "海鸥": {
+      "id": "6762",
+      "brand": "比亚迪",
+      "discount_median": 42.22,
+      "price_median": 4.68
+    },
+    "理想L6": {
+      "id": "6950",
+      "brand": "理想汽车",
+      "discount_median": 34.07,
+      "price_median": 18.58
+    },
+    "理想L7": {
+      "id": "6949",
+      "brand": "理想汽车",
+      "discount_median": 45.03,
+      "price_median": 19.89
+    },
+    "理想L8": {
+      "id": "6910",
+      "brand": "理想汽车",
+      "discount_median": 42.51,
+      "price_median": 21.53
+    },
+    "理想L9": {
+      "id": "6576",
+      "brand": "理想汽车",
+      "discount_median": 39.3,
+      "price_median": 28.98
+    },
+    "理想MEGA": {
+      "id": "6939",
+      "brand": "理想汽车",
+      "discount_median": 38.48,
+      "price_median": 35.38
+    },
+    "理想ONE": {
+      "id": "4974",
+      "brand": "理想汽车",
+      "discount_median": 74.35,
+      "price_median": 9.67
+    },
+    "理想i6": {
+      "id": "8183",
+      "brand": "理想汽车",
+      "discount_median": 20.52,
+      "price_median": 21.74
+    },
+    "瑞虎7": {
+      "id": "3766",
+      "brand": "奇瑞",
+      "discount_median": 46.09,
+      "price_median": 5.38
+    },
+    "瑞虎7 PLUS": {
+      "id": "6288",
+      "brand": "奇瑞",
+      "discount_median": 39.6,
+      "price_median": 6.68
+    },
+    "瑞虎8": {
+      "id": "4693",
+      "brand": "奇瑞",
+      "discount_median": 75.55,
+      "price_median": 3.58
+    },
+    "皇冠": {
+      "id": "882",
+      "brand": "丰田",
+      "discount_median": 73.36,
+      "price_median": 8.38
+    },
+    "秦L": {
+      "id": "7578",
+      "brand": "比亚迪",
+      "discount_median": 36.19,
+      "price_median": 8.38
+    },
+    "秦PLUS": {
+      "id": "5964",
+      "brand": "比亚迪",
+      "discount_median": 47.08,
+      "price_median": 5.68
+    },
+    "红旗E-HS9": {
+      "id": "5425",
+      "brand": "红旗",
+      "discount_median": 74.78,
+      "price_median": 16.98
+    },
+    "红旗E-QM5": {
+      "id": "6002",
+      "brand": "红旗",
+      "discount_median": 74.72,
+      "price_median": 6.2
+    },
+    "红旗H5": {
+      "id": "4410",
+      "brand": "红旗",
+      "discount_median": 60.5,
+      "price_median": 7.58
+    },
+    "红旗H9": {
+      "id": "5566",
+      "brand": "红旗",
+      "discount_median": 67.77,
+      "price_median": 14.0
+    },
+    "红旗HQ9 PHEV": {
+      "id": "7380",
+      "brand": "红旗",
+      "discount_median": 53.84,
+      "price_median": 18.95
+    },
+    "红旗HS5": {
+      "id": "5048",
+      "brand": "红旗",
+      "discount_median": 67.5,
+      "price_median": 7.56
+    },
+    "红旗HS7 PHEV": {
+      "id": "7590",
+      "brand": "红旗",
+      "discount_median": 57.18,
+      "price_median": 13.88
+    },
+    "缤智": {
+      "id": "3460",
+      "brand": "本田",
+      "discount_median": 61.51,
+      "price_median": 5.8
+    },
+    "缤越": {
+      "id": "4701",
+      "brand": "吉利汽车",
+      "discount_median": 30.6,
+      "price_median": 6.01
+    },
+    "艾力绅": {
+      "id": "2565",
+      "brand": "本田",
+      "discount_median": 60.78,
+      "price_median": 13.58
+    },
+    "艾瑞泽8": {
+      "id": "6664",
+      "brand": "奇瑞",
+      "discount_median": 62.51,
+      "price_median": 5.98
+    },
+    "英朗": {
+      "id": "982",
+      "brand": "别克",
+      "discount_median": 83.86,
+      "price_median": 2.38
+    },
+    "蔚来ES6": {
+      "id": "4881",
+      "brand": "蔚来",
+      "discount_median": 67.92,
+      "price_median": 13.38
+    },
+    "蔚来ES8": {
+      "id": "4427",
+      "brand": "蔚来",
+      "discount_median": 41.85,
+      "price_median": 26.28
+    },
+    "蔚来ES9": {
+      "id": "8509",
+      "brand": "蔚来",
+      "discount_median": 25.74,
+      "price_median": 44.98
+    },
+    "蔚来ET5": {
+      "id": "6453",
+      "brand": "蔚来",
+      "discount_median": 46.28,
+      "price_median": 17.38
+    },
+    "蔚来ET5T": {
+      "id": "7306",
+      "brand": "蔚来",
+      "discount_median": 58.02,
+      "price_median": 13.58
+    },
+    "蔚来ET7": {
+      "id": "5264",
+      "brand": "蔚来",
+      "discount_median": 59.54,
+      "price_median": 18.8
+    },
+    "赛那SIENNA": {
+      "id": "6272",
+      "brand": "丰田",
+      "discount_median": 52.46,
+      "price_median": 19.38
+    },
+    "路虎卫士": {
+      "id": "256",
+      "brand": "路虎",
+      "discount_median": 45.51,
+      "price_median": 54.8
+    },
+    "轩逸": {
+      "id": "448",
+      "brand": "日产",
+      "discount_median": 68.79,
+      "price_median": 3.88
+    },
+    "辉腾": {
+      "id": "224",
+      "brand": "大众",
+      "discount_median": 94.67,
+      "price_median": 4.8
+    },
+    "迈巴赫S级": {
+      "id": "3665",
+      "brand": "奔驰",
+      "discount_median": 66.02,
+      "price_median": 53.8
+    },
+    "迈腾": {
+      "id": "496",
+      "brand": "大众",
+      "discount_median": 58.83,
+      "price_median": 9.46
+    },
+    "远景": {
+      "id": "474",
+      "brand": "吉利汽车",
+      "discount_median": 80.31,
+      "price_median": 1.28
+    },
+    "远景X3": {
+      "id": "4481",
+      "brand": "吉利汽车",
+      "discount_median": 72.19,
+      "price_median": 2.08
+    },
+    "远景X6": {
+      "id": "4133",
+      "brand": "吉利汽车",
+      "discount_median": 83.69,
+      "price_median": 1.68
+    },
+    "逍客": {
+      "id": "564",
+      "brand": "日产",
+      "discount_median": 63.97,
+      "price_median": 6.6
+    },
+    "途乐": {
+      "id": "264",
+      "brand": "日产",
+      "discount_median": 78.74,
+      "price_median": 13.68
+    },
+    "途昂": {
+      "id": "4232",
+      "brand": "大众",
+      "discount_median": 76.25,
+      "price_median": 9.4
+    },
+    "途观L": {
+      "id": "4274",
+      "brand": "大众",
+      "discount_median": 73.22,
+      "price_median": 7.0
+    },
+    "途锐": {
+      "id": "82",
+      "brand": "大众",
+      "discount_median": 88.36,
+      "price_median": 9.6
+    },
+    "速腾": {
+      "id": "442",
+      "brand": "大众",
+      "discount_median": 66.12,
+      "price_median": 5.99
+    },
+    "逸动": {
+      "id": "2429",
+      "brand": "长安",
+      "discount_median": 53.88,
+      "price_median": 4.58
+    },
+    "铂智3X": {
+      "id": "7712",
+      "brand": "丰田",
+      "discount_median": 19.23,
+      "price_median": 11.38
+    },
+    "锋兰达": {
+      "id": "6414",
+      "brand": "丰田",
+      "discount_median": 50.29,
+      "price_median": 6.79
+    },
+    "长安CS35PLUS": {
+      "id": "4976",
+      "brand": "长安",
+      "discount_median": 38.37,
+      "price_median": 6.28
+    },
+    "长安CS75PLUS": {
+      "id": "5179",
+      "brand": "长安",
+      "discount_median": 58.66,
+      "price_median": 6.08
+    },
+    "长安UNI-V": {
+      "id": "6335",
+      "brand": "长安",
+      "discount_median": 60.76,
+      "price_median": 4.98
+    },
+    "问界M5": {
+      "id": "6388",
+      "brand": "AITO 问界",
+      "discount_median": 56.89,
+      "price_median": 13.18
+    },
+    "问界M6": {
+      "id": "8529",
+      "brand": "AITO 问界",
+      "discount_median": 13.1,
+      "price_median": 26.19
+    },
+    "问界M7": {
+      "id": "6643",
+      "brand": "AITO 问界",
+      "discount_median": 45.07,
+      "price_median": 17.58
+    },
+    "问界M8": {
+      "id": "8003",
+      "brand": "AITO 问界",
+      "discount_median": 32.09,
+      "price_median": 30.98
+    },
+    "问界M9": {
+      "id": "7207",
+      "brand": "AITO 问界",
+      "discount_median": 40.36,
+      "price_median": 33.28
+    },
+    "雅阁": {
+      "id": "78",
+      "brand": "本田",
+      "discount_median": 69.97,
+      "price_median": 6.04
+    },
+    "零跑B01": {
+      "id": "8006",
+      "brand": "零跑汽车",
+      "discount_median": 31.38,
+      "price_median": 8.47
+    },
+    "零跑B10": {
+      "id": "7877",
+      "brand": "零跑汽车",
+      "discount_median": 38.93,
+      "price_median": 7.28
+    },
+    "零跑C01": {
+      "id": "6161",
+      "brand": "零跑汽车",
+      "discount_median": 52.77,
+      "price_median": 7.68
+    },
+    "零跑C10": {
+      "id": "7382",
+      "brand": "零跑汽车",
+      "discount_median": 31.48,
+      "price_median": 9.98
+    },
+    "零跑C11": {
+      "id": "5205",
+      "brand": "零跑汽车",
+      "discount_median": 49.15,
+      "price_median": 8.89
+    },
+    "零跑C16": {
+      "id": "7674",
+      "brand": "零跑汽车",
+      "discount_median": 38.43,
+      "price_median": 11.38
+    },
+    "零跑T03": {
+      "id": "5515",
+      "brand": "零跑汽车",
+      "discount_median": 52.57,
+      "price_median": 3.58
+    },
+    "雷凌": {
+      "id": "3462",
+      "brand": "丰田",
+      "discount_median": 68.43,
+      "price_median": 4.59
+    },
+    "领克01": {
+      "id": "4221",
+      "brand": "领克",
+      "discount_median": 79.71,
+      "price_median": 4.03
+    },
+    "领克03": {
+      "id": "4402",
+      "brand": "领克",
+      "discount_median": 64.88,
+      "price_median": 5.81
+    },
+    "领克06": {
+      "id": "5555",
+      "brand": "领克",
+      "discount_median": 48.1,
+      "price_median": 6.68
+    },
+    "领克07 EM-P": {
+      "id": "5576",
+      "brand": "领克",
+      "discount_median": 43.33,
+      "price_median": 10.2
+    },
+    "领克20": {
+      "id": "7812",
+      "brand": "领克",
+      "discount_median": 40.0,
+      "price_median": 9.33
+    },
+    "领克900": {
+      "id": "8002",
+      "brand": "领克",
+      "discount_median": 42.3,
+      "price_median": 22.98
+    },
+    "领克Z10": {
+      "id": "5845",
+      "brand": "领克",
+      "discount_median": 45.91,
+      "price_median": 13.43
+    },
+    "飞度": {
+      "id": "81",
+      "brand": "本田",
+      "discount_median": 58.87,
+      "price_median": 3.7
+    },
+    "骐达TIIDA": {
+      "id": "425",
+      "brand": "日产",
+      "discount_median": 78.95,
+      "price_median": 2.63
+    },
+    "高尔夫": {
+      "id": "871",
+      "brand": "大众",
+      "discount_median": 66.91,
+      "price_median": 5.34
+    }
+  }
+}

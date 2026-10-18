@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}武汉二手车价格预测{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>武汉二手车价格预测</h1>
+    <span class="tag">参数录入 · 价格预测</span>
+  </header>
+
+  <main>
+    {% if error %}
+      <div class="alert" role="alert">
+        <strong>提交失败：</strong>{{ error }}
+      </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
