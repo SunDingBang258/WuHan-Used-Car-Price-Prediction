@@ -10,7 +10,7 @@ from fastapi.templating import Jinja2Templates
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
-from app import crud, reference, schemas
+from app import crud, predictor, reference, schemas
 from app.database import get_db
 
 ROOT = Path(__file__).resolve().parent.parent.parent
@@ -99,8 +99,27 @@ async def create_from_form(request: Request, db: DbSession):
         features = reference.lookup(payload.brand, payload.series)
     except (ValidationError, ValueError) as exc:
         return _render_index(request, db, error=_format_error(exc), form=form, status_code=400)
-    crud.create_car(db, payload, features)
-    return RedirectResponse(url="/", status_code=303)
+    car = crud.create_car(db, payload, features)
+    return RedirectResponse(url=f"/cars/{car.id}", status_code=303)
+
+
+@router.get("/cars/{car_id}", response_class=HTMLResponse, summary="估价结果页")
+def car_result(request: Request, car_id: int, db: DbSession):
+    car = crud.get_car(db, car_id)
+    if car is None:
+        return _missing_car(request, car_id)
+    price = predictor.predict(
+        brand=car.brand,
+        series=car.series,
+        car_age_years=float(car.car_age_years),
+        mileage_wan=float(car.mileage_wan),
+        zero_transfer=car.zero_transfer,
+        factory_warranty=car.factory_warranty,
+        near_new=car.near_new,
+    )
+    return templates.TemplateResponse(
+        request, "prediction.html", {"car": car, "price": price}
+    )
 
 
 @router.get("/cars/{car_id}/edit", response_class=HTMLResponse, summary="编辑页")

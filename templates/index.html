@@ -63,6 +63,7 @@
           <td>{{ '是' if car.near_new else '否' }}</td>
           <td>{{ '%.2f'|format(car.series_price_median) if car.series_price_median is not none else '—' }}</td>
           <td class="ops">
+            <a href="/cars/{{ car.id }}">估价</a>
             <a href="/cars/{{ car.id }}/edit">编辑</a>
             <form method="post" action="/cars/{{ car.id }}/delete" onsubmit="return confirm('确认删除这条记录?');">
               <button type="submit" class="link danger">删除</button>

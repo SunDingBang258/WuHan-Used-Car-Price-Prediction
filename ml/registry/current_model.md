@@ -9,8 +9,8 @@
 |---|---|
 | 模型 | **`tuned-11feat`**（HistGradientBoostingRegressor） |
 | 配置文件 | `ml/configs/tuned.yaml` |
-| MLflow run | `5943ec07c33d4b49888d9507cce4de10` |
-| 应用文件 | `app/model.joblib`（1,546,617 字节） |
+| MLflow run | `c486a456b60648e5b609269c147e7de4` |
+| 应用文件 | `app/model.joblib`（1,545,145 字节） |
 | CV MAPE | **14.12%** |
 | CV MAE | 3.00 万元 |
 | CV R² | 0.739 |
@@ -21,7 +21,7 @@
 MLflow 页面：
 
 ```
-https://dagshub.com/q13297638316/WuHan-Used-Car-Price-Prediction.mlflow/#/experiments/1/runs/5943ec07c33d4b49888d9507cce4de10
+https://dagshub.com/q13297638316/WuHan-Used-Car-Price-Prediction.mlflow/#/experiments/1/runs/c486a456b60648e5b609269c147e7de4
 ```
 
 ## 为什么是它
@@ -90,4 +90,4 @@ https://dagshub.com/q13297638316/WuHan-Used-Car-Price-Prediction.mlflow/#/experi
   --dst-path app/model.joblib
 ```
 
-`baseline-8feat` 的 run id 是 `b849f67dbec54312855be07e9d1e105a`（保留它只为对照，**不要**部署）。
+`baseline-8feat` 的 run id 是 `b478bb6006b84fe5ac84ea9d4c6de92c`（保留它只为对照，**不要**部署）。

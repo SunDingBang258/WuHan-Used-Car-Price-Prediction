@@ -40,7 +40,8 @@ import pandas as pd
 import sklearn
 import yaml
 from dotenv import load_dotenv
-from mlflow.models import infer_signature
+from mlflow.models import ModelSignature
+from mlflow.types.schema import ColSpec, Schema
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error, r2_score
 from sklearn.model_selection import KFold
@@ -157,16 +158,19 @@ def build_x(
     frame: pd.DataFrame, use_lookups: bool,
     tables: dict | None = None, fallback: dict | None = None,
 ) -> pd.DataFrame:
-    """拼特征矩阵, 列名即 feature_names()。不用查表特征时就只拼原始列。"""
+    """拼特征矩阵(ndarray), 列的顺序就是 feature_names()。
+
+    不用 DataFrame 是刻意的: 用 DataFrame 训练会让 sklearn 记住 feature_names_in_,
+    之后应用里用 ndarray 推理就会警告 "X does not have valid feature names"。
+    列名由下面手工构造的 ModelSignature 提供, 效果一样。
+    """
     columns = [frame[CATEGORICAL + PLAIN].to_numpy(dtype=float)]
-    names = CATEGORICAL + PLAIN
     if use_lookups:
         columns.append(np.column_stack([
             frame[col].map(tables[key]).fillna(fallback[key]).to_numpy()
             for col, key in LOOKUP_KEYS
         ]))
-        names = names + [name for _c, name in LOOKUP_KEYS]
-    return pd.DataFrame(np.column_stack(columns), columns=names)
+    return np.column_stack(columns)
 
 
 def make_model(cfg: dict, names: list[str]) -> HistGradientBoostingRegressor:
@@ -270,18 +274,22 @@ def main() -> int:
         })
 
         # 制品: 模型 + 逐折指标表 + 配置副本
-        signature = infer_signature(x, model.predict(x))
+        # signature 手工构造 —— 训练用的是 ndarray(见 build_x 的说明), infer_signature
+        # 只能推出一个匿名 tensor, 拿不到列名。
+        signature = ModelSignature(
+            inputs=Schema([ColSpec("double", n) for n in names]),
+            outputs=Schema([ColSpec("double", "price_wan")]),
+        )
         mlflow.sklearn.log_model(
             sk_model=model,
             name="model",
             signature=signature,
-            input_example=x.head(3),
+            input_example={n: float(v) for n, v in zip(names, x[0], strict=True)},
             # MLflow 默认的 skops 会拒绝 HistGradientBoosting(内部 TreePredictor 被判为
             # 不可信类型); 模型是我们自己训的, cloudpickle 足够且不受 sklearn 内部改名影响
             serialization_format="cloudpickle",
             pip_requirements=[
                 f"scikit-learn=={sklearn.__version__}",
-                f"pandas=={pd.__version__}",
                 f"numpy=={np.__version__}",
             ],
         )

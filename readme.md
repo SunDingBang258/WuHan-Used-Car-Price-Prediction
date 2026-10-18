@@ -1,9 +1,9 @@
 从dev分支创建新的feature/xx 来完成其他模块
 
-# 武汉二手车价格预测 —— 参数录入服务
+# 武汉二手车价格预测 —— 参数录入 + 价格预测
 
-保存用户提交的二手车参数到 MySQL，供后续价格预测模型使用。
-**当前阶段只实现「参数录入 + CRUD + HTML 页面」；价格预测模型尚未接入。**
+用户在前端录入二手车参数，后台查静态对照表补出模型特征，调用训练好的模型估价并存库。
+训练与实验跟踪在 `ml/` 下，模型产物 `app/model.joblib` 随代码一起提交。
 
 ## 目录结构
 
@@ -20,21 +20,38 @@
 │   ├── models.py             ORM 模型(cars 表)
 │   ├── schemas.py            请求/响应校验
 │   ├── crud.py               数据访问
+│   ├── reference.py          品牌/车系 → ID+查表特征(读 reference.json)
+│   ├── reference.json        静态对照表(30 品牌 / 279 车系)
+│   ├── predictor.py          加载 model.joblib 做估价
+│   ├── model.joblib          训练好的模型(由 ml/train.py 产出)
 │   ├── main.py               应用装配
 │   └── routers/
-│       ├── cars.py           JSON API
+│       ├── cars.py           JSON API(含 POST /api/predict)
 │       └── pages.py          HTML 页面
-├── templates/                Jinja2 页面(样式内联在 base.html, 没有静态资源目录)
-├── tests/                    测试(见下表)
+├── ml/                       训练与实验跟踪
+│   ├── train.py              训练脚本(调 MLflow 记录)
+│   ├── data_pipeline.py      数据清洗 + 导出对照表
+│   ├── configs/              baseline.yaml / tuned.yaml
+│   ├── registry/             current_model.md(哪个模型是生产版)
+│   ├── README_data.md  README_experiments.md  PROVENANCE.md
+├── templates/                Jinja2 页面
+├── static/style.css          样式
+├── tests/                    测试(按 CI 阶段分目录)
 ├── Dockerfile
 ├── docker-compose.yml        MySQL + 应用编排(已显式指定 name, 见文件注释)
 ├── .dockerignore             构建上下文排除 data/ 等, 避免把凭据与大数据打进镜像
-├── requirements.txt          运行时依赖
-├── requirements-dev.txt      含测试依赖
+├── requirements.txt          运行时依赖(含推理用的 scikit-learn)
+├── requirements-dev.txt      测试依赖 —— CI 装这个
+├── requirements-ml.txt       训练/实验跟踪依赖 —— 只有 ml/ 下的脚本需要
 └── .env.example              环境变量样例(复制成 .env 后填写)
 ```
 
 项目里**没有 pytest.ini**：测试只用了 `skipif` 这类内置 marker，不需要注册。
+
+> ⚠️ `mlflow` / `dagshub` 刻意放在 `requirements-ml.txt`，不放 `requirements-dev.txt`。
+> 它们会拉进约 85 个连锁依赖（graphene、botocore、boto3、alembic、protobuf…），
+> 实测完整安装集从 **36 个包涨到 121 个包**，CI 的 `pip install` 步骤会因此多跑好几分钟，
+> 而 CI 的测试根本不 import 它们。
 
 ## 本地运行
 
