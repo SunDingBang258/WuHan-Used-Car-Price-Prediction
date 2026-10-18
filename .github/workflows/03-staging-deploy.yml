@@ -18,6 +18,18 @@ jobs:
     runs-on: ubuntu-latest
     environment: staging
 
+    # 冒烟测试里的 pytest 跑在 runner 上(不是容器内), 所以必须自己给 DB 配置。
+    # 注意端口是 13306 —— docker-compose 把 mysql 的 3306 映射到宿主机 13306,
+    # 应用容器内部才用 DB_HOST=mysql:3306。
+    # 用户名/密码要和 docker-compose.yml 里 MYSQL_* 的默认值一致。
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: "13306"
+      DB_USER: carpredict
+      DB_PASSWORD: carpredict
+      DB_NAME: car_predict
+      DB_CHARSET: utf8mb4
+
     steps:
       - uses: actions/checkout@v4
 
