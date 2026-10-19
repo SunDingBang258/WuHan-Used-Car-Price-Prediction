@@ -1,0 +1,20 @@
+{# 品牌 → 车系联动。index.html 与 edit.html 共用这一份，避免两处重复维护。
+   数据来自静态对照表 app/reference.json（后端 reference.series_by_brand()），不查数据库。 #}
+<script>
+  const SERIES_BY_BRAND = {{ series_by_brand|tojson }};
+  const brandInput = document.getElementById("brand-input");
+  const seriesInput = document.getElementById("series-input");
+  const seriesList = document.getElementById("series-options");
+
+  function refillSeries() {
+    const list = SERIES_BY_BRAND[brandInput.value.trim()];
+    if (!list) return;  // 品牌还没输到有效值: 保持全量可选
+    seriesList.innerHTML = list.map((s) => '<option value="' + s + '">').join("");
+    const current = seriesInput.value.trim();
+    if (current && !list.includes(current)) seriesInput.value = "";
+  }
+
+  brandInput.addEventListener("input", refillSeries);
+  brandInput.addEventListener("change", refillSeries);
+  refillSeries();
+</script>
