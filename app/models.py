@@ -60,4 +60,4 @@ class Car(Base):
     )
 
     def __repr__(self) -> str:  # pragma: no cover - 调试用
-        return f"<Car id={self.id} {self.brand} {self.series} {self.model_name}>"
+        return f"<Car id={self.id} {self.brand} {self.series}>"
