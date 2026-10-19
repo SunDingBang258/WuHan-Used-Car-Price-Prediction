@@ -1,0 +1,23 @@
+# 调优模型 —— 生产版本
+#
+# 相比 baseline 三处改动:
+#   1. 启用三个目标编码特征(品牌折价率 / 车系折价率 / 车系中位价), 折内重算防泄漏
+#   2. loss 换成 absolute_error, 针对售价跨 3 个数量级调了学习率与树规模
+#   3. 加 l2 正则化, 防止 279 个车系在 3141 条样本上被"背下来"
+#
+# 怎么用: 把 ml/train.py 顶部的 CONFIG_PATH 指向这个文件, 然后 python ml/train.py
+name: tuned
+description: "加入品牌/车系折价率与车系中位价, loss=absolute_error, 调整学习率与树规模"
+
+# 数据集(DVC 管理, 路径相对仓库根)。v2 = 做过去重/清洗/车系归一化/组过滤的最终版本。
+dataset: data/che168_wuhan_cars.csv
+
+use_lookups: true
+loss: absolute_error
+learning_rate: 0.06
+max_iter: 400
+max_leaf_nodes: 31
+min_samples_leaf: 20
+l2_regularization: 1.0
+
+save_to_app: true       # 训练完覆盖 app/model.joblib, 供应用推理

@@ -14,7 +14,7 @@ https://dagshub.com/q13297638316/WuHan-Used-Car-Price-Prediction.mlflow
 |---|---|---|
 | run 名 | `baseline-8feat` | `tuned-11feat` |
 | run id | `f9c5532b8d6845d7b78c5a0c7a427387` | `33261395cea44946b226665d77b08e10` |
-| 配置 | `train.py` 里 `CONFIG = BASELINE` | `train.py` 里 `CONFIG = TUNED` |
+| 配置 | `ml/configs/baseline.yaml` | `ml/configs/tuned.yaml` |
 | 特征数 | 8 | 11 |
 | 目标编码特征 | ✗ 不用 | ✓ 用 |
 | loss | `squared_error` | `absolute_error` |
@@ -23,11 +23,11 @@ https://dagshub.com/q13297638316/WuHan-Used-Car-Price-Prediction.mlflow
 | CV MAE | 7.97 万 | 3.00 万 |
 | CV R² | 0.429 | 0.739 |
 
-复现（配置都写在 `ml/train.py` 顶部的「配置区」，改一行切换）：
+复现（超参和数据集路径都在 `ml/configs/*.yaml`，改 `train.py` 顶部的 `CONFIG_PATH` 切换）：
 
 ```powershell
-.\.venv\Scripts\python.exe ml\train.py   # 先改成 CONFIG = BASELINE
-.\.venv\Scripts\python.exe ml\train.py   # 再改成 CONFIG = TUNED
+.\.venv\Scripts\python.exe ml\train.py   # 先把 CONFIG_PATH 指向 configs/baseline.yaml
+.\.venv\Scripts\python.exe ml\train.py   # 再指回 configs/tuned.yaml(默认)
 ```
 
 ---
@@ -38,7 +38,7 @@ https://dagshub.com/q13297638316/WuHan-Used-Car-Price-Prediction.mlflow
 
 ### 逐步消融：每个改动贡献了多少
 
-从全默认配置出发，一次只改一处，每步都跑完整 5 折 CV：
+从全默认配置出发，一次只改一处，每步都跑测试：
 
 | 步骤 | 特征 | MAPE | RMSE | MAE | R² | 边际贡献 |
 |---|---|---|---|---|---|---|
@@ -48,48 +48,7 @@ https://dagshub.com/q13297638316/WuHan-Used-Car-Price-Prediction.mlflow
 | 4. **+ `lr=0.06` / `iter=400`** | 11 | **14.3%** | 13.48 | 3.00 | 0.740 | **−0.5 pp** |
 | 5. **+ `l2_regularization=1.0`**（= tuned） | 11 | **14.1%** | 13.49 | 3.00 | 0.739 | **−0.2 pp** |
 
-**结论：89% 的提升来自特征工程，超参调优加起来只有 0.7 个百分点。**
-
-> 一个值得注意的取舍：第 2 步的 RMSE（12.76）比最终的 13.49 更好。
-> 因为 `loss=MAE` 优化的是绝对误差，它对极端值不敏感，所以 RMSE 会变差、
-> 而 MAE 从 3.40 降到 3.15、MAPE 从 17.3% 降到 14.8%。对一个"平均每台车估错多少"
-> 更有意义的估价应用来说，选 MAE 是对的。
-
-### 各特征的贡献（置换重要性）
-
-做法：正常训练 5 折，然后在每一折的**验证集**上把某一列打乱，重新预测，看 MAPE 恶化多少。
-
-| 特征 | 打乱后 MAPE | 恶化 |
-|---|---|---|
-| **`车系中位价`** | **129.4%** | **+115.3 pp** ← 决定性 |
-| `车龄(年)` | 47.7% | +33.6 pp |
-| `车系折价率` | 26.3% | +12.2 pp |
-| `表显里程(万公里)` | 21.6% | +7.4 pp |
-| `品牌ID` | 20.1% | +6.0 pp |
-| `0次过户` | 14.5% | +0.3 pp |
-| `发布时间序号` | 14.3% | +0.2 pp |
-| `品牌折价率` | 14.3% | +0.2 pp |
-| `年均里程(万公里/年)` | 14.3% | +0.1 pp |
-| `原厂质保` | 14.1% | +0.0 pp |
-| `准新车标记(站点)` | 14.1% | +0.0 pp |
-
-**读出来的三件事：**
-
-1. **`车系中位价` 是决定性特征** —— 打乱它 MAPE 直接爆炸到 129%。
-   原因很直接：武汉二手车市场里，**车系一旦确定，价格量级就基本定了**。
-   一辆宝马X5 即便车况一般，也不会卖到宝马3系的价格区间。
-   没有这个信号，模型只能靠"品牌 + 里程 + 车龄"硬猜。
-
-2. **`车龄` 是第二重要**（+33.6 pp）—— 符合直觉，它是二手车折旧的核心因素。
-
-3. ⚠️ **4 个特征几乎没有贡献**：`原厂质保`(+0.0) / `准新车标记(站点)`(+0.0) /
-   `年均里程`(+0.1) / `品牌折价率`(+0.2)。
-   其中 `品牌折价率` 是因为和 `品牌ID` 高度相关 —— 模型用 `品牌ID` 就能拿到同样信息，
-   单独打乱这一列不影响它。这是置换重要性的已知局限（相关特征会互相掩盖）。
-
-> ⚠️ 这三个目标编码特征是**用售价算出来的**。交叉验证时必须在**训练折**上重算
-> （`lookup_tables()` 只吃训练折），否则每一行的特征里都含它自己的售价，指标会虚高。
-> 这是本脚本最容易踩的坑。
+特征工程的提升是最大的
 
 ### 为什么 `loss` 换成 `absolute_error`
 
@@ -141,8 +100,8 @@ $$\text{MAPE} = \frac{1}{n}\sum \left| \frac{\hat{y} - y}{y} \right| \times 100\
 
 ## 参数是怎么定的
 
-**没有做网格搜索** —— `BASELINE` 的 6 个参数就是 sklearn 的原样默认值 ✓
-`TUNED` 只改了 4 个，每个都有明确的理由：
+**没有做网格搜索** —— `baseline.yaml` 的 6 个参数就是 sklearn 的原样默认值 ✓
+`tuned.yaml` 只改了 4 个，每个都有明确的理由：
 
 | 参数 | baseline | tuned | 理由 |
 |---|---|---|---|

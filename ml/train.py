@@ -2,18 +2,21 @@
 
 用法
 ----
-要换数据集或超参, 改下面「配置区」里的常量即可:
-    DATASET  选 v1 还是 v2
-    CONFIG   选 BASELINE 还是 TUNED
+直接运行, 没有命令行参数:
+
+    .\\venv\\Scripts\\python.exe ml/train.py
+
+要换数据集或超参, 改 `ml/configs/*.yaml`, 再把下面的 CONFIG_PATH 指向它
+(默认是 configs/tuned.yaml, 也就是生产版)。
 
 每次运行会记录:
     代码版本   git commit SHA             -> tag
     数据版本   DVC 哈希 + 实际 md5        -> param
-    超参数     CONFIG 里的全部键          -> param + config.json 制品
+    超参数     yaml 里的全部键            -> param + config.json 制品
     指标       5 折 CV 的 MAPE / MAE / R² -> metric
     制品       模型(log_model) + config.json + 逐折指标表
 
-产出: MLflow run; 当 CONFIG 里 save_to_app 为 True 时再写 app/model.joblib
+产出: MLflow run; 当 yaml 里 save_to_app 为 True 时再写 app/model.joblib
 
 关键设计
 --------
@@ -37,6 +40,7 @@ import mlflow
 import numpy as np
 import pandas as pd
 import sklearn
+import yaml
 from dotenv import load_dotenv
 from mlflow.models import ModelSignature
 from mlflow.types.schema import ColSpec, Schema
@@ -52,45 +56,11 @@ from sklearn.model_selection import KFold
 ROOT = Path(__file__).resolve().parent.parent
 MODEL_OUT = ROOT / "app" / "model.joblib"
 
-# ============================== 配置区(直接改这里) ==============================
-
-# 数据集路径, 相对仓库根。项目里有两个 DVC 版本:
-#   v1  data/che168_wuhan_cars_v1.csv   3408 条, 未做车系归一化 / 未做组过滤
-#   v2  data/che168_wuhan_cars.csv      3141 条, 车系名一一对应 + 组过滤后的最终版
-DATASET = "data/che168_wuhan_cars.csv"  # ← 想换 v1 就改成 data/che168_wuhan_cars_v1.csv
-
-# 对照组: sklearn 默认超参, 并且不用任何目标编码特征(折价率/车系中位价)
-BASELINE = {
-    "name": "baseline",
-    "description": "HistGradientBoosting 默认超参, 只用原始特征(不含折价率/车系中位价)",
-    "use_lookups": False,       # 关键差异: 不启用目标编码特征
-    "loss": "squared_error",
-    "learning_rate": 0.1,
-    "max_iter": 100,
-    "max_leaf_nodes": 31,
-    "min_samples_leaf": 20,
-    "l2_regularization": 0.0,
-    "save_to_app": False,       # 不覆盖 app/model.joblib
-}
-
-# 生产版: 加入三个目标编码特征, loss 换成绝对误差, 并调了学习率与树规模
-TUNED = {
-    "name": "tuned",
-    "description": "加入品牌/车系折价率与车系中位价, loss=absolute_error, 调整学习率与树规模",
-    "use_lookups": True,
-    "loss": "absolute_error",
-    "learning_rate": 0.06,
-    "max_iter": 400,
-    "max_leaf_nodes": 31,
-    "min_samples_leaf": 20,
-    "l2_regularization": 1.0,
-    "save_to_app": True,        # 训练完覆盖 app/model.joblib, 供应用推理
-}
-
-# ← 改这一行切换要训哪个: CONFIG = BASELINE  或  CONFIG = TUNED
-CONFIG = TUNED
-
-# ================================================================================
+# ============================== 配置 ==============================
+# 代码里只放配置文件的路径 —— 超参数和数据集路径全在 yaml 里, 改配置不用动代码。
+# 想跑对照组就把下面这行换成 configs/baseline.yaml。
+CONFIG_PATH = Path(__file__).parent / "configs" / "tuned.yaml"
+# ================================================================
 
 TARGET = "售价(万元)"
 GUIDE = "新车指导价(万元)"
@@ -161,6 +131,12 @@ def dataset_version(csv: Path) -> dict:
     }
 
 
+# ---------------------------------------------------------------- 配置
+def load_config(path: Path) -> dict:
+    """读训练配置 yaml(超参数 + 数据集路径都在里面)。"""
+    return yaml.safe_load(path.read_text(encoding="utf-8"))
+
+
 # ---------------------------------------------------------------- 数据
 def load_data(csv: Path) -> pd.DataFrame:
     # CSV 前两行是标题行和维度行, 第 3 行才是真正的列名, 所以 header=2
@@ -195,7 +171,7 @@ def feature_names(use_lookups: bool) -> list[str]:
     return CATEGORICAL + NUMERIC + ([name for _c, name in LOOKUP_KEYS] if use_lookups else [])
 
 
-def build_x (
+def build_x(
     frame: pd.DataFrame, use_lookups: bool,
     tables: dict | None = None, fallback: dict | None = None,
 ) -> np.ndarray:
@@ -266,8 +242,7 @@ def log_run_artifacts(cfg: dict, model, names: list[str]) -> None:
     """run 级制品: 配置快照 + 可直接下载的 joblib。"""
     with tempfile.TemporaryDirectory() as tmp:
         (Path(tmp) / "config.json").write_text(
-            json.dumps({"dataset": DATASET, **cfg}, ensure_ascii=False, indent=2),
-            encoding="utf-8",
+            json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8"
         )
         joblib.dump({"model": model, "features": names}, Path(tmp) / "model.joblib")
         mlflow.log_artifacts(tmp, artifact_path="files")
@@ -276,17 +251,19 @@ def log_run_artifacts(cfg: dict, model, names: list[str]) -> None:
 def main() -> int:
     setup_mlflow()
 
-    cfg = CONFIG
+    cfg = load_config(CONFIG_PATH)
+    dataset = cfg["dataset"]                    # 相对仓库根的路径, 写在 yaml 里
     use_lookups = cfg["use_lookups"]
     names = feature_names(use_lookups)
-    csv = ROOT / DATASET
+    csv = ROOT / dataset
 
     df = load_data(csv)
     ver = dataset_version(csv)
     sha = git_commit()
 
-    print(f"配置 {cfg['name']}: {cfg['description']}")
-    print(f"  数据集 {DATASET}  {len(df)} 条   特征 {len(names)} 个 (use_lookups={use_lookups})")
+    print(f"配置 {CONFIG_PATH.name}  ({cfg['name']})")
+    print(f"  {cfg['description']}")
+    print(f"  数据集 {dataset}  {len(df)} 条   特征 {len(names)} 个 (use_lookups={use_lookups})")
     print(f"  代码 {sha[:12]}   数据 md5 {ver['actual_md5'][:12]}")
     if not ver["in_sync"]:
         print(f"  [!] DVC 哈希与实际文件不一致: {ver['dvc_hash']} != {ver['actual_md5']}")
@@ -314,7 +291,7 @@ def main() -> int:
         })
         mlflow.log_params({
             "git_commit": sha[:12],
-            "dataset": DATASET,
+            "dataset": dataset,
             "dataset_md5": ver["actual_md5"],
             "dataset_dvc_hash": ver["dvc_hash"],
             "dataset_rows": len(df),

@@ -8,7 +8,7 @@
 | 项目 | 值 |
 |---|---|
 | 模型 | **`tuned-11feat`**（HistGradientBoostingRegressor） |
-| 配置 | `ml/train.py` 顶部 `CONFIG = TUNED` |
+| 配置 | `ml/configs/tuned.yaml`（`train.py` 顶部的 `CONFIG_PATH` 指向它）|
 | MLflow run | `33261395cea44946b226665d77b08e10` |
 | 应用文件 | `app/model.joblib`（1,545,145 字节） |
 | CV MAPE | **14.12%** |
@@ -66,7 +66,7 @@ https://dagshub.com/q13297638316/WuHan-Used-Car-Price-Prediction.mlflow/#/experi
 1. 改配置或数据，跑训练：
 
 ```powershell
-.\.venv\Scripts\python.exe ml\train.py   # 用 CONFIG = TUNED
+.\.venv\Scripts\python.exe ml\train.py   # 用 CONFIG_PATH 指向的 configs/tuned.yaml
 ```
 
 2. 在 MLflow 上对比新旧 run 的 `cv_mape`（同时看 `cv_mae` / `cv_r2` 防止 MAPE 被低价车带偏）
@@ -75,7 +75,7 @@ https://dagshub.com/q13297638316/WuHan-Used-Car-Price-Prediction.mlflow/#/experi
 
 4. 更新本文件的三处：run id、指标、定版时间
 
-5. 确认 `app/model.joblib` 已被新 run 覆盖（`train.py` 的 `TUNED` 里 `"save_to_app": True`）
+5. 确认 `app/model.joblib` 已被新 run 覆盖（`tuned.yaml` 里 `save_to_app: true`）
 
 6. 提交 `app/model.joblib`（不再被 gitignore 忽略，见 `ml/PROVENANCE.md`）
 

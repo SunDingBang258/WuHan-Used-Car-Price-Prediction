@@ -7,5 +7,6 @@
 -r requirements-dev.txt
 
 pandas==3.0.6
+PyYAML==6.0.3
 mlflow==3.17.1
 dagshub==0.7.3
