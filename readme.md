@@ -1,4 +1,4 @@
-
+﻿
 
 # 武汉二手车价格预测 —— 参数录入 + 价格预测
 
@@ -29,10 +29,10 @@
 │       ├── cars.py           JSON API(含 POST /api/predict)
 │       └── pages.py          HTML 页面
 ├── ml/                       训练与实验跟踪
-│   ├── train.py              训练脚本(调 MLflow 记录)
+│   ├── train.py              训练脚本(调 MLflow; 超参/数据集路径写在文件顶部配置区)
 │   ├── data_pipeline.py      数据清洗 + 导出对照表(默认 v2, `--v1` 产出第一版)
-│   ├── configs/              baseline.yaml / tuned.yaml
 │   ├── registry/             current_model.md(哪个模型是生产版)
+│   ├── README_pipeline.md   全流程技术说明(数据/特征/模型/步骤), 新人先看这个
 │   ├── README_data.md  README_experiments.md  PROVENANCE.md
 ├── templates/                Jinja2 页面
 ├── static/style.css          样式

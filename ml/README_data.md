@@ -11,7 +11,7 @@
 
 两个来源合并（按 `车源ID` 去重，A 优先）→ 4128 条 → 清洗过滤 → **3141 条**。
 
-最终数据集：`data/che168_wuhan_cars.csv`，20 列，793,683 字节，由 DVC 管理。
+最终数据集：`data/che168_wuhan_cars.csv`，20 列，793,525 字节，由 DVC 管理。
 
 ## 数据版本（v1 → v2）
 
@@ -21,8 +21,8 @@
 |---|---|---|
 | 文件 | `data/che168_wuhan_cars_v1.csv` | `data/che168_wuhan_cars.csv` |
 | DVC 指针 | `data/che168_wuhan_cars_v1.csv.dvc` | `data/che168_wuhan_cars.csv.dvc` |
-| **DVC md5** | `d2b80f5b67d653d7abe741ff21e7fb1c` | `99f0c71c43a3c3a57a4545c74a2bae75` |
-| 字节 | 861,865 | 793,683 |
+| **DVC md5** | `d2b80f5b67d653d7abe741ff21e7fb1c` | `4439910deb63db4bc4ec0646389c1962` |
+| 字节 | 861,865 | 793,525 |
 | 行数 | **3408** | **3141** |
 | 车系ID 数 | **475** | **279** |
 | 车系名称种数 | **492**（同一 ID 有 17 种拼写变体） | **279**（ID↔名称一一对应） |

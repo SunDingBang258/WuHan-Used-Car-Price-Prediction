@@ -1,4 +1,4 @@
-# 当前生产模型
+﻿# 当前生产模型
 
 > 这份文件是**应用该加载哪个模型**的唯一权威说明。
 > 换模型时改这里，不要靠"最后一次训练覆盖了 joblib"来决定。
@@ -8,20 +8,20 @@
 | 项目 | 值 |
 |---|---|
 | 模型 | **`tuned-11feat`**（HistGradientBoostingRegressor） |
-| 配置文件 | `ml/configs/tuned.yaml` |
-| MLflow run | `c486a456b60648e5b609269c147e7de4` |
+| 配置 | `ml/train.py` 顶部 `CONFIG = TUNED` |
+| MLflow run | `33261395cea44946b226665d77b08e10` |
 | 应用文件 | `app/model.joblib`（1,545,145 字节） |
 | CV MAPE | **14.12%** |
 | CV MAE | 3.00 万元 |
 | CV R² | 0.739 |
-| 训练数据 | `data/che168_wuhan_cars.csv` md5 `99f0c71c43a3c3a57a4545c74a2bae75` |
+| 训练数据 | `data/che168_wuhan_cars.csv` md5 `4439910deb63db4bc4ec0646389c1962` |
 | 代码 commit | `61c2fa704c2e13ae503e21e797ab02ffa1b4f819` |
 | 定版时间 | 2026-10-18 |
 
 MLflow 页面：
 
 ```
-https://dagshub.com/q13297638316/WuHan-Used-Car-Price-Prediction.mlflow/#/experiments/1/runs/c486a456b60648e5b609269c147e7de4
+https://dagshub.com/q13297638316/WuHan-Used-Car-Price-Prediction.mlflow/#/experiments/1/runs/33261395cea44946b226665d77b08e10
 ```
 
 ## 为什么是它
@@ -66,7 +66,7 @@ https://dagshub.com/q13297638316/WuHan-Used-Car-Price-Prediction.mlflow/#/experi
 1. 改配置或数据，跑训练：
 
 ```powershell
-.\.venv\Scripts\python.exe ml\train.py --config ml\configs\tuned.yaml
+.\.venv\Scripts\python.exe ml\train.py   # 用 CONFIG = TUNED
 ```
 
 2. 在 MLflow 上对比新旧 run 的 `cv_mape`（同时看 `cv_mae` / `cv_r2` 防止 MAPE 被低价车带偏）
@@ -75,7 +75,7 @@ https://dagshub.com/q13297638316/WuHan-Used-Car-Price-Prediction.mlflow/#/experi
 
 4. 更新本文件的三处：run id、指标、定版时间
 
-5. 确认 `app/model.joblib` 已被新 run 覆盖（`tuned.yaml` 里 `save_to_app: true`）
+5. 确认 `app/model.joblib` 已被新 run 覆盖（`train.py` 的 `TUNED` 里 `"save_to_app": True`）
 
 6. 提交 `app/model.joblib`（不再被 gitignore 忽略，见 `ml/PROVENANCE.md`）
 
@@ -86,8 +86,8 @@ https://dagshub.com/q13297638316/WuHan-Used-Car-Price-Prediction.mlflow/#/experi
 ```powershell
 # 下载某个 run 的 joblib
 .\.venv\Scripts\python.exe -m mlflow artifacts download `
-  --artifact-uri "runs:/<run_id>/model_file/model.joblib" `
+  --artifact-uri "runs:/<run_id>/model" `
   --dst-path app/model.joblib
 ```
 
-`baseline-8feat` 的 run id 是 `b478bb6006b84fe5ac84ea9d4c6de92c`（保留它只为对照，**不要**部署）。
+`baseline-8feat` 的 run id 是 `f9c5532b8d6845d7b78c5a0c7a427387`（保留它只为对照，**不要**部署）。

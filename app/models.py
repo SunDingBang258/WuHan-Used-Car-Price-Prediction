@@ -1,7 +1,7 @@
 """ORM 模型: 用户提交的二手车参数。
 
 前 8 个字段是用户填的; 后面 5 个是后台按 品牌/车系 查 app/reference.json 得到的,
-正好对应价格预测模型要用的特征(见 data/prepare_dataset.py 的 FEATURES)。
+正好对应价格预测模型要用的特征(见 ml/train.py 顶部的 CATEGORICAL / NUMERIC / LOOKUP_KEYS)。
 """
 from __future__ import annotations
 

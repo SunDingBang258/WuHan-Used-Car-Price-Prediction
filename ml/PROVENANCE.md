@@ -1,4 +1,4 @@
-# 溯源（Provenance）
+﻿# 溯源（Provenance）
 
 从爬虫到线上模型的完整链条，以及每一步的版本怎么定位。
 
@@ -22,7 +22,7 @@
 ⑤ 对照表         app/reference.json            30 品牌 / 279 车系
                  （同一条命令产出，应用运行时读）
                           ↓
-⑥ 训练           ml/train.py --config configs/tuned.yaml
+⑥ 训练           python ml/train.py   (配置在 train.py 顶部)
                           ↓
 ⑦ 模型记录       MLflow run  +  LoggedModel     ← DagsHub
                           ↓
@@ -34,11 +34,11 @@
 | 项目 | 值 |
 |---|---|
 | 代码 commit | `61c2fa704c2e13ae503e21e797ab02ffa1b4f819` |
-| 数据集 DVC hash = 实际 md5 | `99f0c71c43a3c3a57a4545c74a2bae75` |
-| 数据集行数 / 字节 | 3141 / 793,683 |
-| 配置文件 | `ml/configs/tuned.yaml` |
-| MLflow run id | `c486a456b60648e5b609269c147e7de4` |
-| MLflow LoggedModel | `m-7055a27ad9f04b14bd9f2e6de3dd0c2e` |
+| 数据集 DVC hash = 实际 md5 | `4439910deb63db4bc4ec0646389c1962` |
+| 数据集行数 / 字节 | 3141 / 793,525 |
+| 配置 | `ml/train.py` 顶部 `CONFIG = TUNED` |
+| MLflow run id | `33261395cea44946b226665d77b08e10` |
+| MLflow LoggedModel | `m-7373d984c70b4584a418c1bcefc33e12` |
 | 应用模型文件 | `app/model.joblib`（1,545,145 字节） |
 | scikit-learn | 1.9.1 |
 | MLflow | 3.17.1 |
@@ -65,7 +65,7 @@ recorded = re.search(r"md5:\s*(\S+)", DVC_FILE)      # .dvc 里记的
 
 两者都会作为 param 记录（`dataset_md5` / `dataset_dvc_hash`）。**不一致时脚本会打印告警**——意思是 `dvc add` 忘了跑，`.dvc` 文件已过期。
 
-**超参数** —— 配置文件全文进 param，同时把 yaml 原文件作为 artifact 存一份（`config/tuned.yaml`），这样即使以后配置改了也能还原当次的确切参数。
+**超参数** —— 配置全部进 param，同时把配置快照作为 artifact 存一份（`files/config.json`），这样即使以后配置改了也能还原当次的确切参数。
 
 **指标** —— 5 折 CV 的均值进 metric，逐折明细作为 artifact（`cv_folds.json`）。
 
@@ -74,7 +74,7 @@ recorded = re.search(r"md5:\s*(\S+)", DVC_FILE)      # .dvc 里记的
 | 位置 | 内容 |
 |---|---|
 | `model/`（LoggedModel） | MLflow 3 的模型实体，带 signature、input_example、requirements |
-| `model_file/model.joblib` | run 级制品，直接可下载 |
+| `files/model.joblib` | run 级制品，直接可下载 |
 | `app/model.joblib` | 应用实际加载的，当 `save_to_app: true` 时写入 |
 
 ## 复现方式
@@ -90,9 +90,9 @@ pip install -r requirements-ml.txt
 # 2) 从 DVC 拉回数据集（多人协作时用这个，不重建）
 dvc pull
 
-# 3) 训练（两个配置都跑一遍就复现出两个对比实验）
-.\.venv\Scripts\python.exe ml\train.py --config ml\configs\baseline.yaml
-.\.venv\Scripts\python.exe ml\train.py --config ml\configs\tuned.yaml
+# 3) 训练。超参和数据集路径都在 ml/train.py 顶部的「配置区」, 改 CONFIG 常量切换基线/调优
+.\.venv\Scripts\python.exe ml\train.py   # 先改成 CONFIG = BASELINE
+.\.venv\Scripts\python.exe ml\train.py   # 用 CONFIG = TUNED
 ```
 
 ## 模型文件已提交进 git
