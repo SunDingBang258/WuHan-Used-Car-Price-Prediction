@@ -1,25 +1,5 @@
 {% extends "base.html" %}
-{% block title %}编辑车源 #{{ car.id }}<script>
-  // 选好品牌后, 把车系下拉收窄成该品牌的 (数据来自静态对照表, 不查数据库)
-  const SERIES_BY_BRAND = {{ series_by_brand|tojson }};
-  const brandInput = document.getElementById("brand-input");
-  const seriesInput = document.getElementById("series-input");
-  const seriesList = document.getElementById("series-options");
-
-  function refillSeries() {
-    const list = SERIES_BY_BRAND[brandInput.value.trim()];
-    if (!list) return;
-    seriesList.innerHTML = list.map((s) => '<option value="' + s + '">').join("");
-    const current = seriesInput.value.trim();
-    if (current && !list.includes(current)) seriesInput.value = "";
-  }
-
-  brandInput.addEventListener("input", refillSeries);
-  brandInput.addEventListener("change", refillSeries);
-  refillSeries();
-</script>
-
-{% endblock %}
+{% block title %}编辑车源 #{{ car.id }}{% endblock %}
 {% block content %}
 
 <datalist id="brand-options">{% for b in brands %}<option value="{{ b }}">{% endfor %}</datalist>
@@ -60,3 +40,5 @@
 </section>
 
 {% endblock %}
+
+{% block scripts %}{% include "_series_filter.html" %}{% endblock %}
