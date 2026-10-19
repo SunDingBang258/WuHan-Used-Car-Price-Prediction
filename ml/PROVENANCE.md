@@ -1,21 +1,26 @@
-﻿# 溯源（Provenance）
+# 溯源（Provenance）
 
 从爬虫到线上模型的完整链条，以及每一步的版本怎么定位。
 
 ## 链路
 
 ```
-① 爬虫           data/爬虫/che168_crawler.py  --brand-pages N
-                 品牌清单在 TARGET_BRANDS（30 个）
-                          ↓
-② 原始数据       data/爬虫/che168_wuhan_brands.csv          3222 条, 19 列
-                 data/数据处理/che168_wuhan_cars.raw.csv    2239 条, 31 列
-                          ↓
+① 爬虫           ⚠️ 已丢失: 原本是 data/爬虫/che168_crawler.py --brand-pages N
+                  (品牌清单在 TARGET_BRANDS, 30 个)
+                  这个目录被 data/.gitignore 忽略、也没纳入 DVC, 现在本地已不存在,
+                  所以「从原始抓取重新生成数据集」这一步目前无法复现
+                  (详见 README_pipeline.md §13.6)
+                           ↓
+② 原始数据       data/爬虫/che168_wuhan_brands.csv          3222 条, 19 列   ⚠️ 已丢失
+                 data/数据处理/che168_wuhan_cars.raw.csv    2239 条, 31 列   ✓ 还在
+                           ↓
 ③ 数据流水线     ml/data_pipeline.py
                  · 合并去重（A 优先）
-                 · 丢空 / 丢矛盾值 / 组过滤
-                 · 补派生列 + 目标编码
-                          ↓
+                 · 丢空 / 丢矛盾值
+                 · 补派生列（车系名称 / 年均里程）
+                 · 组过滤（v2 才做）
+                 · 补目标编码（⚠️ 必须在组过滤之后）
+                           ↓
 ④ 训练数据集     data/che168_wuhan_cars.csv    3141 条, 20 列   ← DVC 管理
                  data/che168_wuhan_cars.csv.dvc
                           ↓
@@ -33,7 +38,7 @@
 
 | 项目 | 值 |
 |---|---|
-| 代码 commit | `61c2fa704c2e13ae503e21e797ab02ffa1b4f819` |
+| 代码 commit | `f092717bf57cb1adc3b07f6217f1d19563c76218`（存在 `app/model.joblib` 的 `git_commit` 里） |
 | 数据集 DVC hash = 实际 md5 | `4439910deb63db4bc4ec0646389c1962` |
 | 数据集行数 / 字节 | 3141 / 793,525 |
 | 配置 | `ml/train.py` 顶部 `CONFIG = TUNED` |
@@ -59,8 +64,9 @@ MLflow 还会自动打 `mlflow.source.git.commit` / `mlflow.source.git.branch` �
 **数据版本** —— 同时记两份并交叉校验：
 
 ```python
-actual = hashlib.md5(CSV.read_bytes()).hexdigest()   # 实际文件的 md5
-recorded = re.search(r"md5:\s*(\S+)", DVC_FILE)      # .dvc 里记的
+with csv.open("rb") as fh:                              # 实际文件的 md5
+    actual = hashlib.file_digest(fh, "md5").hexdigest()
+recorded = re.search(r"md5:\s*(\S+)", dvc_file)         # .dvc 里记的
 ```
 
 两者都会作为 param 记录（`dataset_md5` / `dataset_dvc_hash`）。**不一致时脚本会打印告警**——意思是 `dvc add` 忘了跑，`.dvc` 文件已过期。
@@ -75,7 +81,7 @@ recorded = re.search(r"md5:\s*(\S+)", DVC_FILE)      # .dvc 里记的
 |---|---|
 | `model/`（LoggedModel） | MLflow 3 的模型实体，带 signature、input_example、requirements |
 | `files/model.joblib` | run 级制品，直接可下载 |
-| `app/model.joblib` | 应用实际加载的，当 `save_to_app: true` 时写入 |
+| `app/model.joblib` | 应用实际加载的，当 `save_to_app: True` 时写入 |
 
 ## 复现方式
 
@@ -85,9 +91,11 @@ recorded = re.search(r"md5:\s*(\S+)", DVC_FILE)      # .dvc 里记的
 pip install -r requirements-ml.txt
 
 # 1) 数据集（从原始爬取重建，会覆盖 data/che168_wuhan_cars.csv）
+#    ⚠️ 需要 data/爬虫/che168_wuhan_brands.csv, 而它已经丢失, 所以这一步目前会报
+#    FileNotFoundError。只想拿到数据请用下面的 dvc pull。
 .\.venv\Scripts\python.exe ml\data_pipeline.py
 
-# 2) 从 DVC 拉回数据集（多人协作时用这个，不重建）
+# 2) 从 DVC 拉回数据集（推荐, 不需要原始爬虫数据）
 dvc pull
 
 # 3) 训练。超参和数据集路径都在 ml/train.py 顶部的「配置区」, 改 CONFIG 常量切换基线/调优

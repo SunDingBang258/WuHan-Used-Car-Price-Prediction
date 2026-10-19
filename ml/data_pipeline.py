@@ -119,28 +119,17 @@ for row in old_rows:
     seen_ids.add(car_id)
     src = dict(zip(old_col, row, strict=False))
     tags = _tags_of(src.get("车况标签"))
-    merged.append([
-        src.get("车源ID"),
-        src.get("详情页"),
-        src.get("车型"),
-        bid2name.get(src.get("品牌ID")),  # 只有 A 覆盖到的品牌才有名字
-        None,                            # 车系名称, 第 3 步统一补
-        src.get("品牌ID"),
-        src.get("车系ID"),
-        src.get(TARGET),
-        src.get(GUIDE),
-        None,                            # 品牌平均折价率, 第 5 步统一算
-        None,                            # 车系平均折价率, 第 5 步统一算
-        None,                            # 车系历史中位价, 第 5 步统一算
-        src.get("表显里程(万公里)"),
-        src.get("车龄(年)"),
-        None,                            # 年均里程, 第 3 步统一补
-        1 if "0次过户" in tags else 0,
-        1 if "原厂质保" in tags else 0,
-        src.get("发布时间"),
-        src.get("准新车标记(站点)"),
-        src.get("封面图"),
-    ])
+    # 按列名取, 不手写 20 个位置 —— 这样 KEEP_COLUMNS 顺序变了也不会错位
+    rec = {k: src.get(k) for k in KEEP_COLUMNS}
+    rec["品牌名称"] = bid2name.get(src.get("品牌ID"))  # 只有 A 覆盖到的品牌才有名字
+    rec["车系名称"] = None                            # 第 3 步统一补
+    rec["年均里程(万公里/年)"] = None
+    rec["品牌平均折价率(%)"] = None                    # 第 5 步统一算
+    rec["车系平均折价率(%)"] = None
+    rec["车系历史中位价(万元)"] = None
+    rec["0次过户"] = 1 if "0次过户" in tags else 0
+    rec["原厂质保"] = 1 if "原厂质保" in tags else 0
+    merged.append([rec[k] for k in KEEP_COLUMNS])
     added += 1
 print(f"  补入 {added} 条(A 里没有的), 合并后 {len(merged)} 条")
 
@@ -205,7 +194,7 @@ for row in merged:
 
 # 丢掉自相矛盾的行(车龄很短却里程很高)
 before = len(merged)
-merged = [r for r in merged if (_num(r[per_idx]) or 0) <= MAX_MILEAGE_PER_YEAR]
+merged = [r for r in merged if r[per_idx] <= MAX_MILEAGE_PER_YEAR]
 print(f"丢掉「年均里程 > {MAX_MILEAGE_PER_YEAR} 万/年」的矛盾行: "
       f"-{before - len(merged)} 条, 剩 {len(merged)} 条")
 
@@ -236,24 +225,20 @@ else:
 # 如果在过滤之前算, 被删掉的那些行仍然会参与中位数, 结果就是
 # CSV / app/reference.json 里存的值 ≠ 训练时用过滤后数据重算的值,
 # 等于训练和应用喂给模型的特征分布不完全一样(train/serve skew)。
-discounts = []
-for row in merged:
-    price = _num(row[name_to_idx[TARGET]])
-    guide = _num(row[name_to_idx[GUIDE]])
-    discounts.append((guide - price) / guide * 100 if (price and guide) else None)
-
+price_idx = name_to_idx[TARGET]
+guide_idx = name_to_idx[GUIDE]
 for key, out in (("品牌ID", "品牌平均折价率(%)"), ("车系ID", "车系平均折价率(%)")):
-    key_idx = name_to_idx[key]
+    key_idx, out_idx = name_to_idx[key], name_to_idx[out]
     bucket = defaultdict(list)
-    for row, value in zip(merged, discounts, strict=True):
-        if row[key_idx] and value is not None:
-            bucket[row[key_idx]].append(value)
+    for row in merged:
+        price, guide = _num(row[price_idx]), _num(row[guide_idx])
+        if row[key_idx] and price and guide:
+            bucket[row[key_idx]].append((guide - price) / guide * 100)
     medians = {k: round(statistics.median(v), 2) for k, v in bucket.items()}
     for row in merged:
-        row[name_to_idx[out]] = medians.get(row[key_idx])
+        row[out_idx] = medians.get(row[key_idx])
     print(f"已补出「{out}」({len(medians)} 个组)")
 
-price_idx = name_to_idx[TARGET]
 mid_idx = name_to_idx["车系历史中位价(万元)"]
 bucket = defaultdict(list)
 for row in merged:

@@ -6,8 +6,13 @@
 
 | 来源 | 文件 | 内容 |
 |---|---|---|
-| A | `data/爬虫/che168_wuhan_brands.csv` | 按品牌页抓取，30 个品牌，3222 条。**品牌名来自 URL，权威** |
-| B | `data/数据处理/che168_wuhan_cars.raw.csv` | 早期混合品牌抓的列表页，2239 条，31 列 |
+| A | `data/爬虫/che168_wuhan_brands.csv` | 按品牌页抓取，30 个品牌，3222 条。**品牌名来自 URL，权威** ⚠️ **文件已丢失** |
+| B | `data/数据处理/che168_wuhan_cars.raw.csv` | 早期混合品牌抓的列表页，2239 条，31 列 ✓ 还在 |
+
+> ⚠️ 来源 A 已被 `data/.gitignore` 忽略、也没纳入 DVC，现在本地已不存在。
+> 影响：`ml/data_pipeline.py` 无法重新运行（会报 `FileNotFoundError`）。
+> 但**最终的两个数据集都由 DVC 管理**，所以训练仍完全可复现（`dvc pull` 即可）。
+> 详见 `README_pipeline.md` §13.6。
 
 两个来源合并（按 `车源ID` 去重，A 优先）→ 4128 条 → 清洗过滤 → **3141 条**。
 
@@ -75,10 +80,15 @@ dvc checkout      # 按指针从 Azure 远程拉回对应的数据文件
 
 这一条命令做两件事：
 
-1. 合并 / 清洗 / 补派生列 / 过滤 → 写出 `data/che168_wuhan_cars.csv`
+1. 合并 / 清洗 / 补派生列 / 组过滤 → 再补三个目标编码特征 → 写出 `data/che168_wuhan_cars.csv`
 2. 顺手导出 `app/reference.json`（品牌/车系 → ID + 查表特征），供应用的表单下拉和提交查表使用
 
 > 顺序不能颠倒：`app/reference.json` 是这一步的产物，不是独立脚本生成的。
+
+> ⚠️ 三个目标编码特征（两张折价率 + 车系中位价）必须在**组过滤之后**才算。
+> 否则被过滤删掉的那 267 行仍会参与中位数，导致 CSV / `reference.json` 里存的值
+> 和训练时用过滤后数据重算的值不一致（实测 21/30 个品牌有差异，最大 5.76 个百分点），
+> 也就是 train/serve skew。
 
 ## 列说明
 
@@ -157,5 +167,6 @@ while True:
 | `ml/data_pipeline.py` | 生成数据集 + 对照表的脚本 |
 | `data/che168_wuhan_cars.csv` | 最终数据集（DVC 管理） |
 | `data/che168_wuhan_cars.csv.dvc` | DVC 版本记录（md5 + size） |
+| `data/che168_wuhan_cars_v1.csv` | 第一版数据集（DVC 管理，用于版本溯源） |
 | `app/reference.json` | 名称 → ID 查表，应用运行时读 |
-| `data/爬虫/che168_crawler.py` | 爬虫（品牌清单在 `TARGET_BRANDS`） |
+| `data/爬虫/che168_crawler.py` | ⚠️ **已丢失**（原本是爬虫，品牌清单在 `TARGET_BRANDS`） |
