@@ -1,4 +1,4 @@
-﻿# 本地开发与 staging 冒烟测试用的编排: MySQL + 应用
+# 本地开发与 staging 冒烟测试用的编排: MySQL + 应用
 # 用法: docker compose up -d --build   /   docker compose down -v
 #
 # 必须显式写 name: —— 否则 compose 用目录名推导项目名,
@@ -10,7 +10,9 @@ name: car-predict
 # 两者取值不同(宿主机是 root/127.0.0.1, 容器内是普通用户/mysql), 混用会起不来。
 services:
   mysql:
-    image: mysql:8.4
+    # 用 DaoCloud 镜像源: 国内直连 Docker Hub 的域名会被 DNS 污染, 拉不下来。
+    # ⚠️ 这个源只能直连 —— 不要给 Docker Desktop 配代理, 否则请求被转出国反而连不上。
+    image: docker.m.daocloud.io/mysql:8.4
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-car_predict}

@@ -51,10 +51,14 @@ from sklearn.metrics import (
 from sklearn.model_selection import KFold
 
 ROOT = Path(__file__).resolve().parent.parent
-CSV = ROOT / "data" / "che168_wuhan_cars.csv"
-DVC_FILE = ROOT / "data" / "che168_wuhan_cars.csv.dvc"
 MODEL_OUT = ROOT / "app" / "model.joblib"
 DEFAULT_CONFIG = Path(__file__).parent / "configs" / "tuned.yaml"
+
+# 数据集路径由配置文件里的 dataset 字段给出(相对仓库根); 这里只是没配时的兜底。
+# 当前项目有两个 DVC 版本, v2 是训练/应用实际用的那个:
+#   v1  data/che168_wuhan_cars_v1.csv      3408 条, 未做车系归一化/组过滤
+#   v2  data/che168_wuhan_cars.csv         3141 条, 训练用
+DEFAULT_DATASET = "data/che168_wuhan_cars.csv"
 
 TARGET = "售价(万元)"
 GUIDE = "新车指导价(万元)"
@@ -112,12 +116,13 @@ def git_commit() -> str:
         return "unknown"
 
 
-def dataset_version() -> dict:
+def dataset_version(csv: Path) -> dict:
     """DVC 记录的哈希 + 实际算出来的 md5, 两者不一致说明 dvc add 忘了跑。"""
-    actual = hashlib.md5(CSV.read_bytes()).hexdigest()
+    dvc_file = csv.parent / (csv.name + ".dvc")
+    actual = hashlib.md5(csv.read_bytes()).hexdigest()
     recorded = ""
-    if DVC_FILE.exists():
-        match = re.search(r"md5:\s*(\S+)", DVC_FILE.read_text(encoding="utf-8"))
+    if dvc_file.exists():
+        match = re.search(r"md5:\s*(\S+)", dvc_file.read_text(encoding="utf-8"))
         recorded = match.group(1) if match else ""
     return {"dvc_hash": recorded or "unknown", "actual_md5": actual, "in_sync": recorded == actual}
 
@@ -127,8 +132,8 @@ def load_config(path: Path) -> dict:
     return yaml.safe_load(path.read_text(encoding="utf-8"))
 
 
-def load_data() -> pd.DataFrame:
-    df = pd.read_csv(CSV, header=2, skip_blank_lines=True)
+def load_data(csv: Path) -> pd.DataFrame:
+    df = pd.read_csv(csv, header=2, skip_blank_lines=True)
     df = df[df[TARGET].notna()].copy()
     for col in CATEGORICAL:
         df[col] = df[col].astype(str)
@@ -224,19 +229,28 @@ def cross_validate(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
 def main() -> int:
     parser = argparse.ArgumentParser(description="训练价格预测模型并记录到 MLflow")
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG, help="训练配置 yaml")
+    parser.add_argument(
+        "--dataset", default=None,
+        help=f"数据集路径(相对仓库根); 不传则用配置里的 dataset, 再没有就用 {DEFAULT_DATASET}",
+    )
     args = parser.parse_args()
 
     cfg = load_config(args.config)
     use_lookups = bool(cfg.get("use_lookups", False))
     names = feature_names(use_lookups)
 
-    df = load_data()
-    ver = dataset_version()
+    # 数据集: 命令行 > 配置文件的 dataset 字段 > 默认(v2)
+    dataset = args.dataset or cfg.get("dataset") or DEFAULT_DATASET
+    csv = Path(dataset) if Path(dataset).is_absolute() else ROOT / dataset
+
+    df = load_data(csv)
+    ver = dataset_version(csv)
     sha = git_commit()
 
     print(f"配置: {args.config.name}  ({cfg.get('name')})")
     print(f"  特征 {len(names)} 个, use_lookups={use_lookups}")
-    print(f"  数据 {len(df)} 条   代码 {sha[:12]}   数据 {ver['actual_md5'][:12]}")
+    print(f"  数据集 {dataset}  ({len(df)} 条)")
+    print(f"  代码 {sha[:12]}   数据 md5 {ver['actual_md5'][:12]}")
     if not ver["in_sync"]:
         print(f"  [!] DVC 哈希和实际文件不一致: 记录 {ver['dvc_hash']} != 实际 {ver['actual_md5']}")
 
@@ -262,6 +276,7 @@ def main() -> int:
         mlflow.set_tag("use_lookups", str(use_lookups))
         mlflow.log_params({
             "git_commit": sha[:12],
+            "dataset": dataset,
             "dataset_dvc_hash": ver["dvc_hash"],
             "dataset_md5": ver["actual_md5"],
             "dataset_rows": len(df),

@@ -1,5 +1,5 @@
 # 参数录入服务镜像
-FROM python:3.13-slim
+FROM docker.m.daocloud.io/python:3.13-slim
 
 ENV PYTHONUNBUFFERED=1
 WORKDIR /srv/app
