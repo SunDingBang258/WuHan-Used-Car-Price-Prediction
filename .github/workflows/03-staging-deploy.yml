@@ -41,6 +41,28 @@ jobs:
       - name: 安装测试依赖
         run: pip install -r requirements-dev.txt
 
+      # 课程要求的流程: 用 staging 环境的专属 secrets 生成 staging .env, 再构建镜像。
+      # 这些 secret 配在 Settings → Environments → staging 下(不是仓库级)。
+      # 没配时会写出空值, compose 会退回 docker-compose.yml 里的默认值, 不影响本地冒烟。
+      - name: 用 staging secrets 生成 .env
+        run: |
+          cat > .env <<EOF
+          APP_NAME=武汉二手车价格预测(staging)
+          DEBUG=false
+          AUTO_CREATE_TABLES=true
+          DB_HOST=127.0.0.1
+          DB_PORT=13306
+          DB_USER=${{ secrets.STAGING_DB_USER }}
+          DB_PASSWORD=${{ secrets.STAGING_DB_PASSWORD }}
+          DB_NAME=${{ secrets.STAGING_DB_NAME }}
+          DB_CHARSET=utf8mb4
+          MYSQL_ROOT_PASSWORD=${{ secrets.STAGING_MYSQL_ROOT_PASSWORD }}
+          MYSQL_DATABASE=${{ secrets.STAGING_DB_NAME }}
+          MYSQL_USER=${{ secrets.STAGING_DB_USER }}
+          MYSQL_PASSWORD=${{ secrets.STAGING_DB_PASSWORD }}
+          EOF
+          echo "staging .env 已生成($(wc -l < .env) 行), 内容不打印"
+
       - name: 构建并启动 MySQL + 应用
         run: docker compose up -d --build
 

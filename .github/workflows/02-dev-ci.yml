@@ -1,6 +1,7 @@
 name: 02 · dev 集成校验
 
-# dev 是集成分支: 全量回归。卡住这一关才允许往 staging 合。
+# 负责 PR -> staging 这一环: lint + 全量测试 + 构建镜像(课程对 PR 的三项要求)。
+# dev 是集成分支, push 上来同样跑全量。
 on:
   push:
     branches:
@@ -16,7 +17,7 @@ concurrency:
 
 jobs:
   test:
-    name: 全量测试
+    name: 全量测试 + 静态检查 + 构建镜像
     runs-on: ubuntu-latest
 
     services:
@@ -45,7 +46,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
@@ -54,5 +54,11 @@ jobs:
       - name: 安装开发依赖
         run: pip install -r requirements-dev.txt
 
+      - name: 静态检查 (ruff)
+        run: ruff check app tests ml
+
+      - name: 构建镜像(验证 Dockerfile 能过)
+        run: docker build -t car-predict:ci .
+
       - name: 全量测试
-        run: pytest -q tests/stage_feature tests/stage_dev
+        run: pytest -q tests

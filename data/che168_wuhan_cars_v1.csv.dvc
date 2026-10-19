@@ -1,0 +1,5 @@
+outs:
+- md5: d2b80f5b67d653d7abe741ff21e7fb1c
+  size: 861865
+  hash: md5
+  path: che168_wuhan_cars_v1.csv
