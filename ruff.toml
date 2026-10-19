@@ -2,6 +2,10 @@
 #
 # CI 里跑 `ruff check app tests ml`, 用下面这组规则。
 # 显式写出来而不是依赖默认值, 这样 ruff 升级后规则集不会悄悄变。
+#
+# 只做 `check`(静态检查), 不做 `format`(自动排版):
+# 代码是手工排版的, 有些对齐是为了可读性(比如配置区里的注释列对齐),
+# 让 formatter 重排反而会打散这些结构。
 target-version = "py313"
 line-length = 120
 src = ["."]
@@ -12,7 +16,6 @@ src = ["."]
 select = ["E", "W", "F", "I", "UP", "B", "SIM"]
 
 [lint.per-file-ignores]
-# train.py 必须在 load_dotenv() 之后再 import dagshub, 属于有意的非顶层导入
-"ml/train.py" = ["E402"]
 # conftest.py 要先把仓库根插进 sys.path, 才能 import app.*
+# (ml/train.py 里的 import dagshub 写在函数内部, 不属于 E402 管的范围, 不需要豁免)
 "tests/conftest.py" = ["E402"]

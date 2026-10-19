@@ -1,29 +1,22 @@
-"""数据预处理(data pipeline): 合并两个抓取来源, 整理出建模用的最终数据集。
+"""数据预处理: 合并两个抓取来源, 整理出建模用的最终数据集。
 
-两个来源:
+输入(都在 data/ 下, 由爬虫产出):
   A) 爬虫/che168_wuhan_brands.csv         按品牌页抓的 30 个品牌; 品牌名来自 URL, 权威
-  B) 数据处理/che168_wuhan_cars.raw.csv   早先混合品牌抓的全量列表页(31 列)
+  B) 数据处理/che168_wuhan_cars.raw.csv   早先混合品牌抓的列表页(31 列)
 
 流程:
-  1. A + B 合并(按车源ID去重, A 优先); B 的品牌名由 A 得到的 brandid->品牌名 映射补
-  2. 丢掉「品牌名称」或「车龄(年)」为空的行 —— 这部分不可靠
-  3. 补 车系名称 / 年均里程 / 品牌车系平均折价率(缺才补)
+  1. A + B 合并(按车源ID去重, A 优先); B 的品牌名用 A 得到的 brandid->品牌名 映射补
+  2. 丢掉「品牌名称」或「车龄(年)」为空的行
+  3. 补 车系名称 / 年均里程, 并丢掉里程矛盾行
   4. 过滤: 品牌样本数 >= MIN_BRAND 且 车系样本数 >= MIN_SERIES(反复过滤到稳定)
-  5. 只输出 KEEP_COLUMNS -> che168_wuhan_cars.csv
-  6. 顺手把 品牌/车系 -> ID + 查表特征 导出成 app/reference.json
+  5. 补三个目标编码特征: 品牌折价率 / 车系折价率 / 车系中位价
+     ⚠️ 必须在第 4 步【之后】算, 否则被过滤掉的行仍会影响中位数
+  6. 写 data/che168_wuhan_cars.csv, 并把 品牌/车系 查表导出成 app/reference.json
 
-应用(表单下拉 + 提交查表)读的就是第 6 步那份对照表, 所以数据变了这里一跑就同步。
-
-两个数据版本
-------------
-默认(无参数)产出 **v2**: 做车系名称规范化 + 分组过滤, 写 che168_wuhan_cars.csv,
-并同步 app/reference.json。这是训练和应用实际用的版本。
-
-    python ml/data_pipeline.py --v1
-
-产出 **v1**: 停在清洗完的原始形态 —— 不做车系名称规范化, 也不做分组过滤。
-写 che168_wuhan_cars_v1.csv, 且**不碰** app/reference.json。这是"第一版可用的数据",
-用来体现数据版本演进(v1 -> v2 的差异见 ml/README_data.md)。
+两个数据版本(靠 --v1 区分):
+  默认    v2: 做车系名称规范化 + 分组过滤, 训练和应用都用它
+  --v1    v1: 不做规范化和分组过滤, 写 che168_wuhan_cars_v1.csv 且不碰 reference.json
+              (这是"第一版可用数据", 用来体现版本演进, 差异见 ml/README_data.md)
 """
 import csv
 import json
@@ -33,99 +26,50 @@ import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
-HERE = Path(__file__).parent
-DATA_DIR = HERE.parent / "data"
-
-# v1 / v2 的区别全由这个开关控制
-V1 = "--v1" in sys.argv
+DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+V1 = "--v1" in sys.argv  # 控制产出 v1 还是 v2
 CSV = DATA_DIR / ("che168_wuhan_cars_v1.csv" if V1 else "che168_wuhan_cars.csv")
 BRAND_SRC = DATA_DIR / "爬虫" / "che168_wuhan_brands.csv"
 OLD_SRC = DATA_DIR / "数据处理" / "che168_wuhan_cars.raw.csv"
-REFERENCE_FILE = HERE.parent / "app" / "reference.json"
+REFERENCE_FILE = DATA_DIR.parent / "app" / "reference.json"
 
-# 品牌、车系至少要有这么多条样本才保留 —— 样本太少的组, 它的"平均折价率"就是它自己
-MIN_BRAND = 5
-MIN_SERIES = 3
+TARGET = "售价(万元)"                # 预测目标
+GUIDE = "新车指导价(万元)"            # 算折价率要用
+
+MIN_BRAND = 5                       # 品牌至少这么多条样本才保留: 样本太少时它的折价率就是它自己
+MIN_SERIES = 3                      # 车系同上
+MAX_MILEAGE_PER_YEAR = 10.0         # 年均里程超过这个值判定为录错(相当于每天 274 公里全年无休)
+REQUIRED = ["品牌名称", "车龄(年)"]   # 这两列为空的行不可靠, 整行丢掉
 
 # 最终数据集保留的列, 顺序即输出顺序
 KEEP_COLUMNS = [
-    "车源ID",
-    "详情页",
-    "车型",
-    "品牌名称",
-    "车系名称",
-    "品牌ID",
-    "车系ID",
-    "售价(万元)",
-    "新车指导价(万元)",
-    "品牌平均折价率(%)",
-    "车系平均折价率(%)",
-    "车系历史中位价(万元)",
-    "表显里程(万公里)",
-    "车龄(年)",
-    "年均里程(万公里/年)",
-    "0次过户",
-    "原厂质保",
-    "发布时间",
-    "准新车标记(站点)",
-    "封面图",
+    "车源ID", "详情页", "车型", "品牌名称", "车系名称",
+    "品牌ID", "车系ID",
+    "售价(万元)", "新车指导价(万元)",
+    "品牌平均折价率(%)", "车系平均折价率(%)", "车系历史中位价(万元)",
+    "表显里程(万公里)", "车龄(年)", "年均里程(万公里/年)",
+    "0次过户", "原厂质保", "发布时间", "准新车标记(站点)", "封面图",
 ]
-
-# 参与建模的特征
-FEATURES = [
-    "品牌ID",
-    "车系ID",
-    "品牌平均折价率(%)",
-    "车系平均折价率(%)",
-    "车系历史中位价(万元)",
-    "表显里程(万公里)",
-    "车龄(年)",
-    "年均里程(万公里/年)",
-    "0次过户",
-    "原厂质保",
-    "发布时间",
-    "准新车标记(站点)",
-]
-
-# 必须按「类别」处理、绝不能当数值算的列。
-# 这些是网站自己的分类编号: 数字大小毫无意义(161 不比 160 "大"),
-# 但同一个品牌/车系永远是同一个编号, 所以它是稳定的类别键, 不是随机数。
-# 训练时必须开原生类别支持(LightGBM categorical_feature / CatBoost),
-# 或改用 one-hot / 目标编码; 直接乘权重会得到无意义的结果。
-CATEGORICAL = ["品牌ID", "车系ID"]
-
-# 只作展示/标识, 不参与建模
-DISPLAY_ONLY = [
-    "车源ID",
-    "详情页",
-    "车型",
-    "品牌名称",
-    "车系名称",
-    "新车指导价(万元)",
-    "封面图",
-]
-
-TARGET = "售价(万元)"
-
-# 丢掉这些字段为空的行: 品牌名是站点权威口径, 车龄是核心特征(年均里程也依赖它)
-REQUIRED = ["品牌名称", "车龄(年)"]
-
-# 年均里程超过这个值(万公里/年)判定为自相矛盾 —— 相当于每天 274 公里全年无休,
-# 而它又是从"车龄很短 + 里程很高"算出来的, 通常是上牌时间或里程录错。
-MAX_MILEAGE_PER_YEAR = 10.0
 
 
 def _num(text):
+    """字符串转 float, 转不动就返回 None(而不是抛异常)。"""
     try:
         return float(text)
     except (TypeError, ValueError):
         return None
 
 
+def _round2(text):
+    value = _num(text)
+    return None if value is None else round(value, 2)
+
+
 def read_table(path: Path):
+    """读一张表, 返回 (列名, 数据行)。文件前两行是标题行, 第 3 行才是列名。"""
     with path.open(encoding="utf-8-sig", newline="") as fh:
         rows = list(csv.reader(fh))
-    return rows[0], rows[1], rows[2], rows[3:]
+    return rows[2], rows[3:]
 
 
 def _series_name_of(title: str) -> str | None:
@@ -143,7 +87,7 @@ def _tags_of(raw: str) -> set[str]:
 
 # ---------------------------------------------------------------- 1) 合并两个来源
 print(f"来源 A(按品牌): {BRAND_SRC.name}")
-_title, _dim, brand_col, brand_rows = read_table(BRAND_SRC)
+brand_col, brand_rows = read_table(BRAND_SRC)
 print(f"  {len(brand_rows)} 条, {len(brand_col)} 列")
 
 # A 顺带给出 brandid -> 品牌名 的权威映射
@@ -157,12 +101,14 @@ print(f"  提供 {len(bid2name)} 个 brandid -> 品牌名")
 
 # A 的行也要按列名投影到 KEEP_COLUMNS —— 它的列数和新版 KEEP_COLUMNS 未必一致,
 # 直接 list(r) 会因为多一列/少一列而整体错位。
-merged: list[list] = [[dict(zip(brand_col, r, strict=False)).get(k) for k in KEEP_COLUMNS]
-                      for r in brand_rows]
-seen_ids = {r[brand_col.index("车源ID")] for r in brand_rows}
+merged: list[list] = [
+    [dict(zip(brand_col, row, strict=False)).get(k) for k in KEEP_COLUMNS]
+    for row in brand_rows
+]
+seen_ids = {row[brand_col.index("车源ID")] for row in brand_rows}
 
 print(f"来源 B(混合品牌): {OLD_SRC.name}")
-_ot, _od, old_col, old_rows = read_table(OLD_SRC)
+old_col, old_rows = read_table(OLD_SRC)
 print(f"  {len(old_rows)} 条, {len(old_col)} 列")
 
 added = 0
@@ -173,55 +119,45 @@ for row in old_rows:
     seen_ids.add(car_id)
     src = dict(zip(old_col, row, strict=False))
     tags = _tags_of(src.get("车况标签"))
-    merged.append([
-        src.get("车源ID"),
-        src.get("详情页"),
-        src.get("车型"),
-        bid2name.get(src.get("品牌ID")),          # 只有 A 覆盖到的品牌才有名字
-        None,                                     # 车系名称, 后面统一补
-        src.get("品牌ID"),
-        src.get("车系ID"),
-        src.get("售价(万元)"),
-        src.get("新车指导价(万元)"),
-        None,                                     # 品牌平均折价率, 后面统一补
-        None,                                     # 车系平均折价率, 后面统一补
-        None,                                     # 车系历史中位价, 后面统一补
-        src.get("表显里程(万公里)"),
-        src.get("车龄(年)"),
-        None,                                     # 年均里程, 后面统一补
-        1 if "0次过户" in tags else 0,
-        1 if "原厂质保" in tags else 0,
-        src.get("发布时间"),
-        src.get("准新车标记(站点)"),
-        src.get("封面图"),
-    ])
+    # 按列名取, 不手写 20 个位置 —— 这样 KEEP_COLUMNS 顺序变了也不会错位
+    rec = {k: src.get(k) for k in KEEP_COLUMNS}
+    rec["品牌名称"] = bid2name.get(src.get("品牌ID"))  # 只有 A 覆盖到的品牌才有名字
+    rec["车系名称"] = None                            # 第 3 步统一补
+    rec["年均里程(万公里/年)"] = None
+    rec["品牌平均折价率(%)"] = None                    # 第 5 步统一算
+    rec["车系平均折价率(%)"] = None
+    rec["车系历史中位价(万元)"] = None
+    rec["0次过户"] = 1 if "0次过户" in tags else 0
+    rec["原厂质保"] = 1 if "原厂质保" in tags else 0
+    merged.append([rec[k] for k in KEEP_COLUMNS])
     added += 1
-print(f"  补入 {added} 条(A 里没有的)")
-print(f"  合并后 {len(merged)} 条")
+print(f"  补入 {added} 条(A 里没有的), 合并后 {len(merged)} 条")
+
+name_to_idx = {n: i for i, n in enumerate(KEEP_COLUMNS)}
 
 # ---------------------------------------------------------------- 2) 丢掉不确定的行
 for name in REQUIRED:
-    idx = KEEP_COLUMNS.index(name)
+    idx = name_to_idx[name]
     before = len(merged)
     merged = [r for r in merged if r[idx] not in (None, "")]
     print(f"丢掉「{name}」为空的: -{before - len(merged)} 条, 剩 {len(merged)} 条")
 
 # ---------------------------------------------------------------- 3) 补派生列
-name_to_idx = {n: i for i, n in enumerate(KEEP_COLUMNS)}
-missing_series = sum(1 for r in merged if not r[name_to_idx["车系名称"]])
-if missing_series:
-    for row in merged:
-        if not row[name_to_idx["车系名称"]]:
-            row[name_to_idx["车系名称"]] = _series_name_of(row[name_to_idx["车型"]])
-    print(f"已补出「车系名称」({missing_series} 条), "
-          f"共 {len({r[name_to_idx['车系名称']] for r in merged if r[name_to_idx['车系名称']]})} 种")
-
-# 车系名称规范化: 同一个车系ID 只保留出现最多的那种写法
-# (车型名是文本, 同一个车系会有 "揽胜极光进口" / "揽胜极光(进口)" 这类变体,
-#  不规范化的话 车系ID <-> 车系名称 就不是一一对应, 用名字当类别特征会被拆碎)
-# v1 不做这一步 —— 这正是 v1 与 v2 的差异之一。
-series_idx = name_to_idx["车系ID"]
+# 车系名称: 原始数据里有一列, 但早期抓的那批没有, 从车型名里切出来
 series_name_idx = name_to_idx["车系名称"]
+filled = 0
+for row in merged:
+    if not row[series_name_idx]:
+        row[series_name_idx] = _series_name_of(row[name_to_idx["车型"]])
+        filled += 1
+if filled:
+    print(f"已补出「车系名称」{filled} 条")
+
+# 车系名称规范化: 同一个车系ID 只保留出现最多的那种写法。
+# 同一个车系会有 "揽胜极光进口" / "揽胜极光(进口)" 这类变体, 不规范化的话
+# 车系ID 和 车系名称 就不是一一对应, 应用的下拉框会出现同一个车系的两个选项。
+# v1 不做这一步 —— 这是 v1 与 v2 的差异之一。
+series_idx = name_to_idx["车系ID"]
 if V1:
     print("v1: 跳过车系名称规范化")
 else:
@@ -230,13 +166,14 @@ else:
         if row[series_name_idx]:
             spellings[row[series_idx]][row[series_name_idx]] += 1
     canonical = {sid: c.most_common(1)[0][0] for sid, c in spellings.items()}
-    fixed = sum(1 for r in merged
-                if r[series_name_idx] and canonical.get(r[series_idx]) != r[series_name_idx])
+    fixed = 0
     for row in merged:
         if row[series_name_idx]:
-            row[series_name_idx] = canonical.get(row[series_idx], row[series_name_idx])
-    print(f"车系名称规范化: {len(canonical)} 个车系ID 各取最常见写法, 修正 {fixed} 条; "
-          f"规范化后 {len({r[series_name_idx] for r in merged if r[series_name_idx]})} 种")
+            best = canonical.get(row[series_idx], row[series_name_idx])
+            fixed += best != row[series_name_idx]
+            row[series_name_idx] = best
+    kinds = len({r[series_name_idx] for r in merged if r[series_name_idx]})
+    print(f"车系名称规范化: {len(canonical)} 个车系ID 各取最常见写法, 修正 {fixed} 条, 剩 {kinds} 种")
 
 # 站点标记统一成 0/1 (爬虫早期版本写的是 是/否, 已抓下来的数据要就地转换)
 flag_idx = name_to_idx["准新车标记(站点)"]
@@ -248,57 +185,18 @@ for row in merged:
 if converted:
     print(f"「准新车标记(站点)」是/否 -> 1/0: 转换 {converted} 条")
 
-if any(not r[name_to_idx["年均里程(万公里/年)"]] for r in merged):
-    filled0 = 0
-    for row in merged:
-        mileage = _num(row[name_to_idx["表显里程(万公里)"]])
-        age = _num(row[name_to_idx["车龄(年)"]])
-        per = round(mileage / age, 2) if (mileage is not None and age) else 0
-        row[name_to_idx["年均里程(万公里/年)"]] = per
-        filled0 += per == 0
-    print(f"已补出「年均里程」(其中填 0 的 {filled0} 条)")
+# 年均里程: 里程 / 车龄(车龄为 0 时没有意义, 填 0)
+per_idx = name_to_idx["年均里程(万公里/年)"]
+for row in merged:
+    mileage = _num(row[name_to_idx["表显里程(万公里)"]])
+    age = _num(row[name_to_idx["车龄(年)"]])
+    row[per_idx] = round(mileage / age, 2) if (mileage is not None and age) else 0
 
 # 丢掉自相矛盾的行(车龄很短却里程很高)
-per_year_idx = name_to_idx["年均里程(万公里/年)"]
 before = len(merged)
-merged = [r for r in merged if (_num(r[per_year_idx]) or 0) <= MAX_MILEAGE_PER_YEAR]
+merged = [r for r in merged if r[per_idx] <= MAX_MILEAGE_PER_YEAR]
 print(f"丢掉「年均里程 > {MAX_MILEAGE_PER_YEAR} 万/年」的矛盾行: "
       f"-{before - len(merged)} 条, 剩 {len(merged)} 条")
-
-if any(not r[name_to_idx["品牌平均折价率(%)"]] for r in merged):
-    discounts = []
-    for row in merged:
-        price = _num(row[name_to_idx["售价(万元)"]])
-        guide = _num(row[name_to_idx["新车指导价(万元)"]])
-        discounts.append((guide - price) / guide * 100 if (price and guide) else None)
-    for key, out in (("品牌ID", "品牌平均折价率(%)"), ("车系ID", "车系平均折价率(%)")):
-        key_idx = name_to_idx[key]
-        bucket = defaultdict(list)
-        for row, value in zip(merged, discounts, strict=True):
-            if row[key_idx] and value is not None:
-                bucket[row[key_idx]].append(value)
-        medians = {k: round(statistics.median(v), 2) for k, v in bucket.items()}
-        out_idx = name_to_idx[out]
-        for row in merged:
-            row[out_idx] = medians.get(row[key_idx])
-        print(f"已补出「{out}」({len(medians)} 个组)")
-
-# 车系历史中位价: 该车系所有车源「售价」的中位数
-# ⚠️ 这是直接用目标算出来的(目标编码)。数据集里存全量版供推理时查表;
-#    训练评估必须在训练集上重算, 否则每行的特征里含自己那一行的售价, 指标会虚高。
-mid_idx = name_to_idx["车系历史中位价(万元)"]
-if any(not r[mid_idx] for r in merged):
-    price_idx = name_to_idx["售价(万元)"]
-    bucket = defaultdict(list)
-    for row in merged:
-        price = _num(row[price_idx])
-        if row[series_idx] and price:
-            bucket[row[series_idx]].append(price)
-    medians = {k: round(statistics.median(v), 2) for k, v in bucket.items()}
-    for row in merged:
-        row[mid_idx] = medians.get(row[series_idx])
-    print(f"已补出「车系历史中位价(万元)」({len(medians)} 个车系, "
-          f"{min(medians.values()):.2f} ~ {max(medians.values()):.2f} 万)")
 
 # ---------------------------------------------------------------- 4) 过滤到稳定
 # v1 不做这一步 —— 这是 v1 与 v2 的第二个差异(也是 v1 行数更多的原因)。
@@ -313,23 +211,49 @@ else:
             counts = Counter(r[idx] for r in merged)
             merged = [r for r in merged if counts[r[idx]] >= least]
         if len(merged) == size:
-            break
-    for key, least in (("品牌ID", MIN_BRAND), ("车系ID", MIN_SERIES)):
-        counts = Counter(r[name_to_idx[key]] for r in merged)
-        print(f"「{key}」>= {least}: 剩 {len(counts)} 组, 最少 {min(counts.values())} 条")
-    print(f"过滤共删除 {before - len(merged)} 条 "
-          f"({(before - len(merged)) / before * 100:.1f}%)")
+            break  # 这一轮没删掉任何东西 → 稳定了
+    print(f"分组过滤: -{before - len(merged)} 条 "
+          f"({(before - len(merged)) / before * 100:.1f}%), 剩 {len(merged)} 条")
 
-def _round2(text) -> float | None:
-    value = _num(text)
-    return None if value is None else round(value, 2)
+# ---------------------------------------------------------------- 5) 目标编码特征
+# ⚠️ 这三列必须放在「组过滤」【之后】算。
+#
+# 它们都是拿售价算出来的(售价就是预测目标, 所以叫目标编码):
+#     品牌/车系折价率 = 该组每行 (新车指导价 - 售价) / 新车指导价 的中位数
+#     车系中位价      = 该车系每行售价的中位数
+#
+# 如果在过滤之前算, 被删掉的那些行仍然会参与中位数, 结果就是
+# CSV / app/reference.json 里存的值 ≠ 训练时用过滤后数据重算的值,
+# 等于训练和应用喂给模型的特征分布不完全一样(train/serve skew)。
+price_idx = name_to_idx[TARGET]
+guide_idx = name_to_idx[GUIDE]
+for key, out in (("品牌ID", "品牌平均折价率(%)"), ("车系ID", "车系平均折价率(%)")):
+    key_idx, out_idx = name_to_idx[key], name_to_idx[out]
+    bucket = defaultdict(list)
+    for row in merged:
+        price, guide = _num(row[price_idx]), _num(row[guide_idx])
+        if row[key_idx] and price and guide:
+            bucket[row[key_idx]].append((guide - price) / guide * 100)
+    medians = {k: round(statistics.median(v), 2) for k, v in bucket.items()}
+    for row in merged:
+        row[out_idx] = medians.get(row[key_idx])
+    print(f"已补出「{out}」({len(medians)} 个组)")
+
+mid_idx = name_to_idx["车系历史中位价(万元)"]
+bucket = defaultdict(list)
+for row in merged:
+    price = _num(row[price_idx])
+    if row[series_idx] and price:
+        bucket[row[series_idx]].append(price)
+medians = {k: round(statistics.median(v), 2) for k, v in bucket.items()}
+for row in merged:
+    row[mid_idx] = medians.get(row[series_idx])
+print(f"已补出「车系历史中位价(万元)」({len(medians)} 个车系, "
+      f"{min(medians.values()):.2f} ~ {max(medians.values()):.2f} 万)")
 
 
 def write_reference(rows: list[list]) -> None:
-    """导出 品牌/车系 -> ID + 查表特征, 给应用做名称查表(app/reference.json)。
-
-    ⚠️ 必须在样本数过滤之后调用 —— 样本太少的组, 中位价和折价率没有意义。
-    """
+    """导出 品牌/车系 -> ID + 查表特征, 给应用做名称查表(app/reference.json)。"""
     brands: dict[str, dict] = {}
     series: dict[str, dict] = {}
     for row in rows:
@@ -359,25 +283,21 @@ def write_reference(rows: list[list]) -> None:
     print(f"已更新对照表 {REFERENCE_FILE.name}: {len(brands)} 个品牌, {len(series)} 个车系")
 
 
-# ---------------------------------------------------------------- 5) 输出
-title = [f"车源数据(按维度整理) 来源 {BRAND_SRC.name} + {OLD_SRC.name} 共 {len(merged)} 条"]
+# ---------------------------------------------------------------- 6) 输出
+# CSV 是 3 行表头: 标题行 + 维度行 + 真正的列名行(train.py 用 header=2 读)
+title_row = [f"车源数据(按维度整理) 来源 {BRAND_SRC.name} + {OLD_SRC.name} 共 {len(merged)} 条"]
 dim_row = ["标识", "标识", "车辆", "车辆", "车辆", "车辆", "车辆",
            "价格", "价格", "价格", "价格", "价格",
            "车况", "车况", "车况", "车况", "车况",
            "交易", "交易", "媒体"]
 with CSV.open("w", encoding="utf-8-sig", newline="") as fh:
     writer = csv.writer(fh)
-    writer.writerow(title)
+    writer.writerow(title_row)
     writer.writerow(dim_row)
     writer.writerow(KEEP_COLUMNS)
     writer.writerows(merged)
 
-print()
-print(f"已写回 {CSV.name}: {len(merged)} 条, {len(KEEP_COLUMNS)} 列")
-print(f"特征 {len(FEATURES)} 个: {FEATURES}")
-print(f"其中类别特征(必须按类别处理): {CATEGORICAL}")
-print(f"只作展示 {len(DISPLAY_ONLY)} 个: {DISPLAY_ONLY}")
-print(f"目标: {TARGET}")
+print(f"\n已写回 {CSV.name}: {len(merged)} 条, {len(KEEP_COLUMNS)} 列")
 
 # 数据集变了, 应用那份对照表必须跟着更新, 否则表单里选不到新品牌/新车系。
 # v1 是历史版本, 不覆盖应用正在用的对照表。
